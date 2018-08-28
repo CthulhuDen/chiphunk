@@ -1,5 +1,7 @@
 module Main where
 
+import Chiphunk
+
 main :: IO ()
 main = do
-  putStrLn "hello world"
+  print $ cpv 10 20
