@@ -1,0 +1,20 @@
+name:                chiphunk
+version:             0.1.0.0
+#synopsis:
+#description:
+homepage:            https://github.com/CthulhuDen/chiphunk#readme
+license:             BSD3
+author:              Cthulhu
+maintainer:          cthulhu.den@gmail.com
+copyright:           Cthulhu (c) 2018
+category:            Web
+extra-source-files:
+- README.md
+
+dependencies:
+  - base >= 4.7 && < 5
+
+executables:
+  chiphunk:
+    source-dirs:      src
+    main:             Main.hs
