@@ -19,41 +19,42 @@ library:
   include-dirs:
   - Chipmunk2D-7.0.2/include
   - src/Chiphunk
-  c-sources:
-  - Chipmunk2D-7.0.2/src/chipmunk.c
-  - Chipmunk2D-7.0.2/src/cpConstraint.c
-  - Chipmunk2D-7.0.2/src/cpSpaceStep.c
-  - Chipmunk2D-7.0.2/src/cpShape.c
-  - Chipmunk2D-7.0.2/src/cpSpace.c
-  - Chipmunk2D-7.0.2/src/cpArbiter.c
-  - Chipmunk2D-7.0.2/src/cpArray.c
-  - Chipmunk2D-7.0.2/src/cpBBTree.c
-  - Chipmunk2D-7.0.2/src/cpBody.c
-  - Chipmunk2D-7.0.2/src/cpCollision.c
-  - Chipmunk2D-7.0.2/src/cpDampedRotarySpring.c
-  - Chipmunk2D-7.0.2/src/cpDampedSpring.c
-  - Chipmunk2D-7.0.2/src/cpGearJoint.c
-  - Chipmunk2D-7.0.2/src/cpGrooveJoint.c
-  - Chipmunk2D-7.0.2/src/cpHashSet.c
-  - Chipmunk2D-7.0.2/src/cpHastySpace.c
-  - Chipmunk2D-7.0.2/src/cpMarch.c
-  - Chipmunk2D-7.0.2/src/cpPinJoint.c
-  - Chipmunk2D-7.0.2/src/cpPivotJoint.c
-  - Chipmunk2D-7.0.2/src/cpPolyline.c
-  - Chipmunk2D-7.0.2/src/cpPolyShape.c
-  - Chipmunk2D-7.0.2/src/cpRatchetJoint.c
-  - Chipmunk2D-7.0.2/src/cpRobust.c
-  - Chipmunk2D-7.0.2/src/cpRotaryLimitJoint.c
-  - Chipmunk2D-7.0.2/src/cpSimpleMotor.c
-  - Chipmunk2D-7.0.2/src/cpSlideJoint.c
-  - Chipmunk2D-7.0.2/src/cpSpaceComponent.c
-  - Chipmunk2D-7.0.2/src/cpSpaceDebug.c
-  - Chipmunk2D-7.0.2/src/cpSpaceHash.c
-  - Chipmunk2D-7.0.2/src/cpSpaceQuery.c
-  - Chipmunk2D-7.0.2/src/cpSpatialIndex.c
-  - Chipmunk2D-7.0.2/src/cpSweep1D.c
+  verbatim:
+    c-sources:
+      Chipmunk2D-7.0.2/src/chipmunk.c
+      Chipmunk2D-7.0.2/src/cpConstraint.c
+      Chipmunk2D-7.0.2/src/cpSpaceStep.c
+      Chipmunk2D-7.0.2/src/cpShape.c
+      Chipmunk2D-7.0.2/src/cpSpace.c
+      Chipmunk2D-7.0.2/src/cpArbiter.c
+      Chipmunk2D-7.0.2/src/cpArray.c
+      Chipmunk2D-7.0.2/src/cpBBTree.c
+      Chipmunk2D-7.0.2/src/cpBody.c
+      Chipmunk2D-7.0.2/src/cpCollision.c
+      Chipmunk2D-7.0.2/src/cpDampedRotarySpring.c
+      Chipmunk2D-7.0.2/src/cpDampedSpring.c
+      Chipmunk2D-7.0.2/src/cpGearJoint.c
+      Chipmunk2D-7.0.2/src/cpGrooveJoint.c
+      Chipmunk2D-7.0.2/src/cpHashSet.c
+      Chipmunk2D-7.0.2/src/cpHastySpace.c
+      Chipmunk2D-7.0.2/src/cpMarch.c
+      Chipmunk2D-7.0.2/src/cpPinJoint.c
+      Chipmunk2D-7.0.2/src/cpPivotJoint.c
+      Chipmunk2D-7.0.2/src/cpPolyline.c
+      Chipmunk2D-7.0.2/src/cpPolyShape.c
+      Chipmunk2D-7.0.2/src/cpRatchetJoint.c
+      Chipmunk2D-7.0.2/src/cpRobust.c
+      Chipmunk2D-7.0.2/src/cpRotaryLimitJoint.c
+      Chipmunk2D-7.0.2/src/cpSimpleMotor.c
+      Chipmunk2D-7.0.2/src/cpSlideJoint.c
+      Chipmunk2D-7.0.2/src/cpSpaceComponent.c
+      Chipmunk2D-7.0.2/src/cpSpaceDebug.c
+      Chipmunk2D-7.0.2/src/cpSpaceHash.c
+      Chipmunk2D-7.0.2/src/cpSpaceQuery.c
+      Chipmunk2D-7.0.2/src/cpSpatialIndex.c
+      Chipmunk2D-7.0.2/src/cpSweep1D.c
 
-  - src/Chiphunk/wrapper.c
+      src/Chiphunk/wrapper.c
 
 
 executables:
