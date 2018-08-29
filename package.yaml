@@ -16,9 +16,15 @@ dependencies:
 
 library:
   source-dirs:       src
+  exposed-modules:
+  - Chiphunk.Low.Types
+  - Chiphunk.Low.Vect
+  - Chiphunk.Low
   include-dirs:
   - Chipmunk2D-7.0.2/include
   - src/Chiphunk
+  dependencies:
+  - vector-space
   verbatim:
     c-sources:
       Chipmunk2D-7.0.2/src/chipmunk.c
