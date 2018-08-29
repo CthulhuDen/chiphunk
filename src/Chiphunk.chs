@@ -1,5 +1,4 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Chiphunk
   ( CPVect (..)
@@ -25,9 +24,9 @@ instance Storable CPVect where
   sizeOf _    = {# sizeof cpVect #}
   alignment _ = {# alignof cpVect #}
   poke p (CPVect x y) = do
-    {# set cpVect->x #} p $ realToFrac @_ @CPFloat x
-    {# set cpVect->y #} p $ realToFrac @_ @CPFloat y
-  peek p = CPVect <$> (realToFrac @CPFloat <$> {# get cpVect->x #} p)
-                  <*> (realToFrac @CPFloat <$> {# get cpVect->y #} p)
+    {# set cpVect->x #} p $ realToFrac x
+    {# set cpVect->y #} p $ realToFrac y
+  peek p = CPVect <$> (realToFrac <$> {# get cpVect->x #} p)
+                  <*> (realToFrac <$> {# get cpVect->y #} p)
 
 {# fun pure unsafe w_cpv as cpv {`Double' , `Double', alloca- `CPVect' peek*} -> `()' #}
