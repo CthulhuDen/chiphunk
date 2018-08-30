@@ -13,6 +13,8 @@ module Chiphunk.Low.Types
   , ShapePtr
   , ConstraintPtr
   , ArbiterPtr
+  , Transform (..)
+  , TransformPtr
   ) where
 
 import Data.Cross
@@ -100,3 +102,26 @@ data Constraint
 data Arbiter
 
 {# pointer *cpArbiter as ArbiterPtr -> Arbiter #}
+
+data Transform = Transform
+  { tA :: !Double, tB :: !Double, tC :: !Double, tD :: !Double, tTx :: !Double, tTy :: !Double
+  } deriving Show
+
+instance Storable Transform where
+  sizeOf _    = {# sizeof cpTransform #}
+  alignment _ = {# alignof cpTransform #}
+  poke p (Transform a b c d tx ty) = do
+    {# set cpTransform->a #} p  $ realToFrac a
+    {# set cpTransform->b #} p  $ realToFrac b
+    {# set cpTransform->c #} p  $ realToFrac c
+    {# set cpTransform->d #} p  $ realToFrac d
+    {# set cpTransform->tx #} p $ realToFrac tx
+    {# set cpTransform->ty #} p $ realToFrac ty
+  peek p = Transform <$> (realToFrac <$> {# get cpTransform->a #} p)
+                     <*> (realToFrac <$> {# get cpTransform->b #} p)
+                     <*> (realToFrac <$> {# get cpTransform->c #} p)
+                     <*> (realToFrac <$> {# get cpTransform->d #} p)
+                     <*> (realToFrac <$> {# get cpTransform->tx #} p)
+                     <*> (realToFrac <$> {# get cpTransform->ty #} p)
+
+{# pointer *cpTransform as TransformPtr -> Transform #}

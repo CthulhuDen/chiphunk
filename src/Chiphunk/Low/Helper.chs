@@ -2,12 +2,14 @@ module Chiphunk.Low.Helper where
 
 import Data.VectorSpace
 import Foreign
-import Foreign.C.Types
 import System.IO.Unsafe
+
+import Chiphunk.Low.Internal
 
 {# import Chiphunk.Low.Types #}
 
 #include <chipmunk/chipmunk.h>
+#include <wrapper.h>
 
 momentForCircle :: Double -> Double -> Double -> Vect -> Double
 momentForCircle m r1 r2 offs = m * (0.5 * (r1 * r1 + r2 * r2) + magnitudeSq offs)
@@ -31,4 +33,12 @@ areaForSegment v1 v2 r = magnitude (v1 ^-^ v2) * 2 * r + pi * r * r
 
 {# fun pure unsafe cpAreaForPoly as areaForPoly {withList* `[Vect]'&, `Double'} -> `Double' #}
 
-withList xs inner = withArray xs $ \p -> inner (fromIntegral $ length xs, castPtr p)
+{# fun pure unsafe w_cpCentroidForPoly as centroidForPoly {withList* `[Vect]'&, alloca- `Vect' peek*} -> `()' #}
+
+convexHull :: [Vect] -> Double -> ([Vect], Int)
+convexHull vs tol = unsafePerformIO $
+  withArray vs $ \pVs ->
+  allocaArray (length vs) $ \pRes ->
+  alloca $ \pFst -> do
+    n <- {# call cpConvexHull as c_convexHull #} (fromIntegral $ length vs) pVs pRes pFst (realToFrac tol)
+    (,) <$> peekArray (fromIntegral n) pRes <*> (fromIntegral <$> peek pFst)

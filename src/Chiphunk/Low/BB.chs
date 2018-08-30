@@ -19,7 +19,7 @@ bbNewForCircle :: Vect -> Double -> BB
 bbNewForCircle v r = bbNewForExtents v r r
 
 bbIntersects :: BB -> BB -> Bool
-BB l1 b1 r1 t1 `bbIntersects` BB l2 b2 r2 t2 = r1 >= l1 && r2 >= l2 && t1 >= b2 && t2 >= b2
+BB l1 b1 r1 t1 `bbIntersects` BB l2 b2 r2 t2 = r1 >= l1 && r2 >= l2 && t1 >= b1 && t2 >= b2
 
 bbContains :: BB -> BB -> Bool
 BB l1 b1 r1 t1 `bbContains` BB l2 b2 r2 t2 = l1 <= l2 && r1 >= r2 && t1 >= t2 && b1 <= b2

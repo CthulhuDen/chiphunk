@@ -1,7 +1,6 @@
 module Main where
 
 import Chiphunk.Low
-import Control.Monad
 import Text.Printf
 
 main :: IO ()

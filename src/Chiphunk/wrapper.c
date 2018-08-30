@@ -59,3 +59,28 @@ void w_cpBodyGetVelocityAtLocalPoint(const cpBody *body, cpVect point, cpVect *o
 {
   *out = cpBodyGetVelocityAtLocalPoint(body, point);
 }
+
+void w_cpShapeGetBB(const cpShape *shape, cpBB *out)
+{
+  *out = cpShapeGetBB(shape);
+}
+
+void w_cpShapeGetSurfaceVelocity(const cpShape *shape, cpVect *out)
+{
+  *out = cpShapeGetSurfaceVelocity(shape);
+}
+
+void w_cpShapeGetFilter(const cpShape *shape, cpShapeFilter *out)
+{
+  *out = cpShapeGetFilter(shape);
+}
+
+void w_cpShapeCacheBB(cpShape *shape, cpBB *out)
+{
+  *out = cpShapeCacheBB(shape);
+}
+
+void w_cpCentroidForPoly(int count, const cpVect *vects, cpVect *out)
+{
+  *out = cpCentroidForPoly(count, vects);
+}

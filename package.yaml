@@ -14,6 +14,9 @@ extra-source-files:
 dependencies:
 - base >= 4.7 && < 5
 
+ghc-options:
+- -Wall
+
 library:
   source-dirs:       src
   exposed-modules:
@@ -21,6 +24,7 @@ library:
   - Chiphunk.Low.Vect
   - Chiphunk.Low.BB
   - Chiphunk.Low.Body
+  - Chiphunk.Low.Shape
   - Chiphunk.Low
   include-dirs:
   - Chipmunk2D-7.0.2/include
@@ -73,6 +77,8 @@ executables:
       buildable: false
     source-dirs:     app
     main:            Main.hs
+    ghc-options:
+    - -O2
     dependencies:
     - chiphunk
 

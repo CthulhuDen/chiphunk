@@ -23,3 +23,13 @@ void w_cpBodyWorldToLocal(const cpBody *body, const cpVect point, cpVect *out);
 void w_cpBodyGetVelocityAtWorldPoint(const cpBody *body, const cpVect point, cpVect *out);
 
 void w_cpBodyGetVelocityAtLocalPoint(const cpBody *body, const cpVect point, cpVect *out);
+
+void w_cpShapeGetBB(const cpShape *shape, cpBB *out);
+
+void w_cpShapeGetSurfaceVelocity(const cpShape *shape, cpVect *out);
+
+void w_cpShapeGetFilter(const cpShape *shape, cpShapeFilter *out);
+
+void w_cpShapeCacheBB(cpShape *shape, cpBB *out);
+
+void w_cpCentroidForPoly(const int count, const cpVect *vects, cpVect *out);
