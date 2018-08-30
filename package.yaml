@@ -19,6 +19,7 @@ library:
   exposed-modules:
   - Chiphunk.Low.Types
   - Chiphunk.Low.Vect
+  - Chiphunk.Low.BB
   - Chiphunk.Low
   include-dirs:
   - Chipmunk2D-7.0.2/include

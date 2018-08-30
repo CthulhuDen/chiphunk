@@ -53,7 +53,7 @@ main = do
     pos <- bodyGetPosition ballBody
     vel <- bodyGetVelocity ballBody
     printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
-           t (cpvX pos) (cpvY pos) (cpvX vel) (cpvY vel)
+           t (vX pos) (vY pos) (vX vel) (vY vel)
 
     spaceStep space timeStep
 

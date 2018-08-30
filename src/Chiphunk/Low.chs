@@ -3,13 +3,16 @@
 module Chiphunk.Low
   ( module Chiphunk.Low
   , module Chiphunk.Low.Types
+  , module Chiphunk.Low.Math
   , module Chiphunk.Low.Vect
   ) where
 
 import Foreign
 import System.IO.Unsafe
 
+import Chiphunk.Low.Math
 import Chiphunk.Low.Vect
+import Chiphunk.Low.BB
 {# import Chiphunk.Low.Types #}
 
 #include <chipmunk/chipmunk.h>

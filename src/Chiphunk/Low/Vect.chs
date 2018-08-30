@@ -8,6 +8,9 @@ import Foreign
 
 #include <wrapper.h>
 
+cpv :: Double -> Double -> Vect
+cpv = Vect
+
 vEql :: Vect -> Vect -> Bool
 vEql = (==)
 
