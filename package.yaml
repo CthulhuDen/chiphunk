@@ -27,6 +27,7 @@ library:
   - src/Chiphunk
   dependencies:
   - vector-space
+  - safe-exceptions
   verbatim:
     c-sources: |
       Chipmunk2D-7.0.2/src/chipmunk.c

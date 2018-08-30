@@ -1,5 +1,6 @@
 module Chiphunk.Low.Body where
 
+import Control.Exception.Safe
 import Foreign
 
 {# import Chiphunk.Low.Types #}
@@ -94,3 +95,32 @@ import Foreign
 {# fun unsafe cpBodyActivateStatic as bodyActivateStatic {`BodyPtr', `ShapePtr'} -> `()' #}
 
 {# fun unsafe cpBodySleepWithGroup as bodySleepWithGroup {`BodyPtr', `BodyPtr'} -> `()' #}
+
+type BodyShapeIteratorFunc = BodyPtr -> ShapePtr -> Ptr () -> IO ()
+
+foreign import ccall unsafe "wrapper"
+  mkBodyShapeIteratorFunc :: BodyShapeIteratorFunc -> IO (FunPtr BodyShapeIteratorFunc)
+
+{# fun cpBodyEachShape as bodyEachShape {`BodyPtr' , withIterator* `BodyShapeIteratorFunc' , `Ptr ()'} -> `()' #}
+  where
+    withIterator i = mkBodyShapeIteratorFunc i `bracket` freeHaskellFunPtr
+
+type BodyConstraintIteratorFunc = BodyPtr -> ConstraintPtr -> Ptr () -> IO ()
+
+foreign import ccall unsafe "wrapper"
+  mkBodyConstraintIteratorFunc :: BodyConstraintIteratorFunc -> IO (FunPtr BodyConstraintIteratorFunc)
+
+{# fun cpBodyEachConstraint as bodyEachConstraint
+  {`BodyPtr' , withIterator* `BodyConstraintIteratorFunc' , `Ptr ()'} -> `()' #}
+  where
+    withIterator i = mkBodyConstraintIteratorFunc i `bracket` freeHaskellFunPtr
+
+type BodyArbiterIteratorFunc = BodyPtr -> ArbiterPtr -> Ptr () -> IO ()
+
+foreign import ccall unsafe "wrapper"
+  mkBodyArbiterIteratorFunc :: BodyArbiterIteratorFunc -> IO (FunPtr BodyArbiterIteratorFunc)
+
+{# fun cpBodyEachArbiter as bodyEachArbiter
+  {`BodyPtr' , withIterator* `BodyArbiterIteratorFunc' , `Ptr ()'} -> `()' #}
+  where
+    withIterator i = mkBodyArbiterIteratorFunc i `bracket` freeHaskellFunPtr

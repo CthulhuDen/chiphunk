@@ -7,6 +7,7 @@ module Chiphunk.Low
   , module Chiphunk.Low.Helper
   , module Chiphunk.Low.Body
   , module Chiphunk.Low.Vect
+  , nullPtr
   ) where
 
 import Foreign

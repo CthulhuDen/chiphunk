@@ -11,6 +11,8 @@ module Chiphunk.Low.Types
   , BodyType (..)
   , SpacePtr
   , ShapePtr
+  , ConstraintPtr
+  , ArbiterPtr
   ) where
 
 import Data.Cross
@@ -90,3 +92,11 @@ data Space
 data Shape
 
 {# pointer *cpShape as ShapePtr -> Shape #}
+
+data Constraint
+
+{# pointer *cpConstraint as ConstraintPtr -> Constraint #}
+
+data Arbiter
+
+{# pointer *cpArbiter as ArbiterPtr -> Arbiter #}
