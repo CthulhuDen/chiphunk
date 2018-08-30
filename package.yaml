@@ -20,6 +20,7 @@ library:
   - Chiphunk.Low.Types
   - Chiphunk.Low.Vect
   - Chiphunk.Low.BB
+  - Chiphunk.Low.Body
   - Chiphunk.Low
   include-dirs:
   - Chipmunk2D-7.0.2/include
@@ -27,7 +28,7 @@ library:
   dependencies:
   - vector-space
   verbatim:
-    c-sources:
+    c-sources: |
       Chipmunk2D-7.0.2/src/chipmunk.c
       Chipmunk2D-7.0.2/src/cpConstraint.c
       Chipmunk2D-7.0.2/src/cpSpaceStep.c

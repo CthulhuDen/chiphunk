@@ -1,3 +1,4 @@
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Chiphunk.Low.Types
@@ -5,8 +6,10 @@ module Chiphunk.Low.Types
   , VectPtr
   , BB (..)
   , BBPtr
-  , SpacePtr
+  , DataPtr
   , BodyPtr
+  , BodyType (..)
+  , SpacePtr
   , ShapePtr
   ) where
 
@@ -66,13 +69,23 @@ instance Storable BB where
 
 {# pointer *cpBB as BBPtr -> BB #}
 
-data Space
-
-{# pointer *cpSpace as SpacePtr -> Space #}
+{# pointer cpDataPointer as DataPtr #}
 
 data Body
 
 {# pointer *cpBody as BodyPtr -> Body #}
+
+{# enum cpBodyType as BodyType
+  { CP_BODY_TYPE_DYNAMIC as BodyTypeDynamic
+  , CP_BODY_TYPE_KINEMATIC as BodyTypeKimenatic
+  , CP_BODY_TYPE_STATIC as BodyTypeStatic
+  } #}
+
+deriving instance Show BodyType
+
+data Space
+
+{# pointer *cpSpace as SpacePtr -> Space #}
 
 data Shape
 

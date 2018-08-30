@@ -4,6 +4,7 @@ module Chiphunk.Low
   ( module Chiphunk.Low
   , module Chiphunk.Low.Types
   , module Chiphunk.Low.Math
+  , module Chiphunk.Low.Body
   , module Chiphunk.Low.Vect
   ) where
 
@@ -13,6 +14,7 @@ import System.IO.Unsafe
 import Chiphunk.Low.Math
 import Chiphunk.Low.Vect
 import Chiphunk.Low.BB
+import Chiphunk.Low.Body
 {# import Chiphunk.Low.Types #}
 
 #include <chipmunk/chipmunk.h>
@@ -26,8 +28,6 @@ import Chiphunk.Low.BB
 
 {# fun unsafe cpSpaceGetStaticBody as spaceGetStaticBody {`SpacePtr'} -> `BodyPtr' #}
 
-{# fun unsafe cpBodyNew as bodyNew {`Double', `Double'} -> `BodyPtr' #}
-
 {# fun unsafe cpSegmentShapeNew as segmentShapeNew {`BodyPtr', with* %`Vect', with* %`Vect', `Double'} -> `ShapePtr' #}
 
 {# fun unsafe cpCircleShapeNew as circleShapeNew {`BodyPtr', `Double', with* %`Vect'} -> `ShapePtr' #}
@@ -40,15 +40,7 @@ import Chiphunk.Low.BB
 
 {# fun unsafe cpSpaceAddBody as spaceAddBody {`SpacePtr', `BodyPtr'} -> `()' #}
 
-{# fun unsafe cpBodySetPosition as bodySetPosition {`BodyPtr', with* %`Vect'} -> `()' #}
-
-{# fun unsafe w_cpBodyGetPosition as bodyGetPosition {`BodyPtr', alloca- `Vect' peek*} -> `()' #}
-
-{# fun unsafe w_cpBodyGetVelocity as bodyGetVelocity {`BodyPtr', alloca- `Vect' peek*} -> `()' #}
-
 {# fun unsafe cpSpaceStep as spaceStep {`SpacePtr', `Double'} -> `()' #}
-
-{# fun unsafe cpBodyFree as bodyFree {`BodyPtr'} -> `()' #}
 
 {# fun unsafe cpShapeFree as shapeFree {`ShapePtr'} -> `()' #}
 
