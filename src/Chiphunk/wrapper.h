@@ -15,3 +15,11 @@ void w_cpBodyGetVelocity(const cpBody *body, cpVect *out);
 void w_cpBodyGetForce(const cpBody *body, cpVect *out);
 
 void w_cpBodyGetRotation(const cpBody *body, cpVect *out);
+
+void w_cpBodyLocalToWorld(const cpBody *body, const cpVect point, cpVect *out);
+
+void w_cpBodyWorldToLocal(const cpBody *body, const cpVect point, cpVect *out);
+
+void w_cpBodyGetVelocityAtWorldPoint(const cpBody *body, const cpVect point, cpVect *out);
+
+void w_cpBodyGetVelocityAtLocalPoint(const cpBody *body, const cpVect point, cpVect *out);

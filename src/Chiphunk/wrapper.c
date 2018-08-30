@@ -39,3 +39,23 @@ void w_cpBodyGetRotation(const cpBody *body, cpVect *out)
 {
   *out = cpBodyGetRotation(body);
 }
+
+void w_cpBodyLocalToWorld(const cpBody *body, cpVect point, cpVect *out)
+{
+  *out = cpBodyLocalToWorld(body, point);
+}
+
+void w_cpBodyWorldToLocal(const cpBody *body, cpVect point, cpVect *out)
+{
+  *out = cpBodyWorldToLocal(body, point);
+}
+
+void w_cpBodyGetVelocityAtWorldPoint(const cpBody *body, cpVect point, cpVect *out)
+{
+  *out = cpBodyGetVelocityAtWorldPoint(body, point);
+}
+
+void w_cpBodyGetVelocityAtLocalPoint(const cpBody *body, cpVect point, cpVect *out)
+{
+  *out = cpBodyGetVelocityAtLocalPoint(body, point);
+}

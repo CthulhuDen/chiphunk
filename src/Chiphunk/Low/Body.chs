@@ -62,3 +62,35 @@ import Foreign
 {# fun unsafe cpBodyGetUserData as bodyGetUserData {`BodyPtr'} -> `DataPtr' #}
 
 {# fun unsafe cpBodySetUserData as bodySetUserData {`BodyPtr', `DataPtr'} -> `()' #}
+
+{# fun unsafe w_cpBodyLocalToWorld as bodyLocalToWorld {`BodyPtr', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe w_cpBodyWorldToLocal as bodyWorldToLocal {`BodyPtr', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe w_cpBodyGetVelocityAtWorldPoint as bodyGetVelocityAtWorldPoint
+  {`BodyPtr', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe w_cpBodyGetVelocityAtLocalPoint as bodyGetVelocityAtLocalPoint
+  {`BodyPtr', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe cpBodyApplyForceAtWorldPoint as bodyApplyForceAtWorldPoint
+  {`BodyPtr', with* %`Vect', with* %`Vect'} -> `()' #}
+
+{# fun unsafe cpBodyApplyForceAtLocalPoint as bodyApplyForceAtLocalPoint
+  {`BodyPtr', with* %`Vect', with* %`Vect'} -> `()' #}
+
+{# fun unsafe cpBodyApplyImpulseAtWorldPoint as bodyApplyImpulseAtWorldPoint
+  {`BodyPtr', with* %`Vect', with* %`Vect'} -> `()' #}
+
+{# fun unsafe cpBodyApplyImpulseAtLocalPoint as bodyApplyImpulseAtLocalPoint
+  {`BodyPtr', with* %`Vect', with* %`Vect'} -> `()' #}
+
+{# fun unsafe cpBodyIsSleeping as bodyIsSleeping {`BodyPtr'} -> `Bool' #}
+
+{# fun unsafe cpBodyActivate as bodyActivate {`BodyPtr'} -> `()' #}
+
+{# fun unsafe cpBodySleep as bodySleep {`BodyPtr'} -> `()' #}
+
+{# fun unsafe cpBodyActivateStatic as bodyActivateStatic {`BodyPtr', `ShapePtr'} -> `()' #}
+
+{# fun unsafe cpBodySleepWithGroup as bodySleepWithGroup {`BodyPtr', `BodyPtr'} -> `()' #}
