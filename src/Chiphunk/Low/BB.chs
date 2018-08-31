@@ -27,6 +27,7 @@ import Chiphunk.Low.Math
 {# import Chiphunk.Low.Types #}
 
 #include <chipmunk/chipmunk.h>
+#include <wrapper.h>
 
 -- | Convenience constructor for 'BB' structs. Like 'cpv' this function returns a copy and not a malloced pointer.
 bbNew :: Double -> Double -> Double -> Double -> BB
@@ -99,14 +100,14 @@ bbMergedArea
 BB l1 b1 r1 t1 `bbMergedArea` BB l2 b2 r2 t2 = (max r1 r2 - min l1 l2) * (max t1 t2 - min b1 b2)
 
 -- | Returns the fraction along the segment query the 'BB' is hit. Returns INFINITY if it doesn’t hit.
-{# fun pure unsafe cpBBSegmentQuery as bbSegmentQuery
+{# fun pure unsafe w_cpBBSegmentQuery as bbSegmentQuery
   { with* %`BB'   -- ^ Box
   , with* %`Vect' -- ^ One segment end
   , with* %`Vect' -- ^ Other segment end
   } -> `Double' #}
 
 -- | Returns true if the segment defined by endpoints @a@ and @b@ intersect @bb@.
-{# fun pure unsafe cpBBIntersectsSegment as bbIntersectsSegment
+{# fun pure unsafe w_cpBBIntersectsSegment as bbIntersectsSegment
   { with* %`BB'   -- ^ bb
   , with* %`Vect' -- ^ a
   , with* %`Vect' -- ^ b

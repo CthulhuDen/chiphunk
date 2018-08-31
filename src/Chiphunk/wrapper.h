@@ -33,3 +33,7 @@ void w_cpShapeGetFilter(const cpShape *shape, cpShapeFilter *out);
 void w_cpShapeCacheBB(cpShape *shape, cpBB *out);
 
 void w_cpCentroidForPoly(const int count, const cpVect *vects, cpVect *out);
+
+cpFloat w_cpBBSegmentQuery(cpBB bb, cpVect a, cpVect b);
+
+cpBool w_cpBBIntersectsSegment(cpBB bb, cpVect a, cpVect b);

@@ -84,3 +84,13 @@ void w_cpCentroidForPoly(int count, const cpVect *vects, cpVect *out)
 {
   *out = cpCentroidForPoly(count, vects);
 }
+
+cpFloat w_cpBBSegmentQuery(cpBB bb, cpVect a, cpVect b)
+{
+  return cpBBSegmentQuery(bb, a, b);
+}
+
+cpBool w_cpBBIntersectsSegment(cpBB bb, cpVect a, cpVect b)
+{
+  return cpBBIntersectsSegment(bb, a, b);
+}
