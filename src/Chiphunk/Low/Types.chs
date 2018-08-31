@@ -1,6 +1,8 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 
+-- | Description: Basic Chipmunk data types.
+-- Module provides basic Chipmunk data types.
 module Chiphunk.Low.Types
   ( Vect (..)
   , VectPtr
@@ -23,6 +25,7 @@ import Foreign
 
 #include <chipmunk/chipmunk.h>
 
+-- | 2D vector packed into a struct.
 data Vect = Vect
   { vX :: !Double, vY :: !Double
   } deriving (Eq, Show)
@@ -52,8 +55,10 @@ instance Storable Vect where
   peek p = Vect <$> (realToFrac <$> {# get cpVect->x #} p)
                 <*> (realToFrac <$> {# get cpVect->y #} p)
 
+-- | Pointer to vector.
 {# pointer *cpVect as VectPtr -> Vect #}
 
+-- | Simple bounding box struct. Stored as left, bottom, right, top values.
 data BB = BB
   { bbL :: !Double, bbB :: !Double, bbR :: !Double, bbT :: !Double
   } deriving (Show)
@@ -71,15 +76,46 @@ instance Storable BB where
               <*> (realToFrac <$> {# get cpBB->r #} p)
               <*> (realToFrac <$> {# get cpBB->t #} p)
 
+-- | Pointer to bounding box.
 {# pointer *cpBB as BBPtr -> BB #}
 
+-- | Pointer to user data.
 {# pointer cpDataPointer as DataPtr #}
 
 data Body
 
+-- | Rigid body somewhere in C code. Can only use pointer to this type.
 {# pointer *cpBody as BodyPtr -> Body #}
 
-{# enum cpBodyType as BodyType
+-- | Chipmunk supports three different types of bodies with unique behavioral and performance characteristics.
+data BodyType =
+    BodyTypeDynamic
+    -- ^ Dynamic bodies are the default body type.
+    -- They react to collisions, are affected by forces and gravity, and have a finite amount of mass.
+    -- These are the type of bodies that you want the physics engine to simulate for you.
+    -- Dynamic bodies interact with all types of bodies and can generate collision callbacks.
+  | BodyTypeKimenatic
+    -- ^ Kinematic bodies are bodies that are controlled from your code instead of inside the physics engine.
+    -- They arent affected by gravity
+    -- and they have an infinite amount of mass so they don’t react to collisions or forces with other bodies.
+    -- Kinematic bodies are controlled by setting their velocity, which will cause them to move.
+    -- Good examples of kinematic bodies might include things like moving platforms.
+    -- Objects that are touching or jointed to a kinematic body are never allowed to fall asleep.
+  | BodyTypeStatic
+    -- ^ Static bodies are bodies that never (or rarely) move.
+    -- Using static bodies for things like terrain offers a big performance boost over other body types —
+    -- because Chipmunk doesn’t need to check for collisions between static objects
+    -- and it never needs to update their collision information.
+    -- Additionally, because static bodies don’t move,
+    -- Chipmunk knows it’s safe to let objects that are touching or jointed to them fall asleep.
+    -- Generally all of your level geometry will be attached to a static body
+    -- except for things like moving platforms or doors.
+    -- Every space provide a built-in static body for your convenience.
+    -- Static bodies can be moved, but there is a performance penalty as the collision information is recalculated.
+    -- There is no penalty for having multiple static bodies, and it can be useful for simplifying your code
+    -- by allowing different parts of your static geometry to be initialized or moved separately.
+
+{# enum cpBodyType as BodyType nocode
   { CP_BODY_TYPE_DYNAMIC as BodyTypeDynamic
   , CP_BODY_TYPE_KINEMATIC as BodyTypeKimenatic
   , CP_BODY_TYPE_STATIC as BodyTypeStatic
@@ -89,20 +125,47 @@ deriving instance Show BodyType
 
 data Space
 
+-- | Spaces in Chipmunk are the basic unit of simulation. You add rigid bodies, shapes, and constraints to the space
+-- and then step them all forward through time together.
 {# pointer *cpSpace as SpacePtr -> Space #}
 
 data Shape
 
+-- | There are currently 3 collision shape types:
+--
+-- * Circles: Fastest and simplest collision shape.
+--
+-- * Line segments: Meant mainly as a static shape. Can be beveled in order to give them a thickness.
+--
+-- * Convex polygons: Slowest, but most flexible collision shape.
+--
+-- You can add as many shapes to a body as you wish. That is why the two types are separate.
+--
+-- Combining multiple shapes gives you the flexibility to make any object you want
+-- as well as providing different areas of the same object with different friction, elasticity or callback values.
 {# pointer *cpShape as ShapePtr -> Shape #}
 
 data Constraint
 
+-- | A constraint is something that describes how two bodies interact with each other. (how they constrain each other)
+-- Constraints can be simple joints that allow bodies to pivot around each other like the bones in your body,
+-- or they can be more abstract like the gear joint or motors.
 {# pointer *cpConstraint as ConstraintPtr -> Constraint #}
 
 data Arbiter
 
+-- | Chipmunk’s 'Arbiter' struct encapsulates a pair of colliding shapes and all of the data about their collision.
+-- 'ArbiterPtr' is created when a collision starts, and persist until those shapes are no longer colliding.
+--
+-- Why are they called arbiters? The short answer is that I kept using the word “arbitrates”
+-- to describe the way that collisions were resolved and then I saw that Box2D actually called them arbiters
+-- way back in 2006 when I was looking at its solver.
+-- An arbiter is like a judge, a person that has authority to settle disputes between two people.
+-- It was a fun, fitting name and was shorter to type than CollisionPair which I had been using.
+-- It was originally meant to be a private internal structure only, but evolved to be useful from callbacks.
 {# pointer *cpArbiter as ArbiterPtr -> Arbiter #}
 
+-- | Type used for 2×3 affine transforms in Chipmunk.
 data Transform = Transform
   { tA :: !Double, tB :: !Double, tC :: !Double, tD :: !Double, tTx :: !Double, tTy :: !Double
   } deriving Show
@@ -124,4 +187,5 @@ instance Storable Transform where
                      <*> (realToFrac <$> {# get cpTransform->tx #} p)
                      <*> (realToFrac <$> {# get cpTransform->ty #} p)
 
+-- | Pointer to 'Transform'
 {# pointer *cpTransform as TransformPtr -> Transform #}

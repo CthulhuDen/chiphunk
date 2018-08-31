@@ -3,3 +3,6 @@ build:
 
 clean:
 	stack clean
+
+docs:
+	stack haddock

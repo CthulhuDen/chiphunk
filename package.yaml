@@ -20,6 +20,9 @@ ghc-options:
 library:
   source-dirs:       src
   exposed-modules:
+  - Chiphunk.Low.Math
+  - Chiphunk.Low.Helper
+
   - Chiphunk.Low.Types
   - Chiphunk.Low.Vect
   - Chiphunk.Low.BB
