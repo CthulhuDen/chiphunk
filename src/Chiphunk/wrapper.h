@@ -1,7 +1,5 @@
 #include <chipmunk/chipmunk.h>
 
-void w_cpSpaceGetGravity(const cpSpace *space, cpVect *out);
-
 void w_cpvslerp(const cpVect v1, const cpVect v2, const cpFloat t, cpVect *out);
 
 void w_cpvslerpconst(const cpVect v1, const cpVect v2, const cpFloat a, cpVect *out);
@@ -37,3 +35,5 @@ void w_cpCentroidForPoly(const int count, const cpVect *vects, cpVect *out);
 cpFloat w_cpBBSegmentQuery(cpBB bb, cpVect a, cpVect b);
 
 cpBool w_cpBBIntersectsSegment(cpBB bb, cpVect a, cpVect b);
+
+void w_cpSpaceGetGravity(const cpSpace *space, cpVect *out);

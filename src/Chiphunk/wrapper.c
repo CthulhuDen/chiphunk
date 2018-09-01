@@ -1,10 +1,5 @@
 #include <wrapper.h>
 
-void w_cpSpaceGetGravity(const cpSpace *space, cpVect *out)
-{
-  *out = cpSpaceGetGravity(space);
-}
-
 void w_cpvslerp(cpVect v1, cpVect v2, cpFloat t, cpVect *out)
 {
   *out = cpvslerp(v1, v2, t);
@@ -93,4 +88,9 @@ cpFloat w_cpBBSegmentQuery(cpBB bb, cpVect a, cpVect b)
 cpBool w_cpBBIntersectsSegment(cpBB bb, cpVect a, cpVect b)
 {
   return cpBBIntersectsSegment(bb, a, b);
+}
+
+void w_cpSpaceGetGravity(const cpSpace *space, cpVect *out)
+{
+  *out = cpSpaceGetGravity(space);
 }
