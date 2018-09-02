@@ -115,7 +115,7 @@ module Chiphunk.Low
     --   -- Now let's make a ball that falls onto the line and rolls off.
     --   -- First we need to make a cpBody to hold the physical properties of the object.
     --   -- These include the mass, position, velocity, angle, etc. of the object.
-    --   -- Then we attach collision shapes to the 'BodyPtr' to give it a size and shape.
+    --   -- Then we attach collision shapes to the 'Body' to give it a size and shape.
     --
     --   let radius = 5
     --   let mass = 1
@@ -167,20 +167,20 @@ module Chiphunk.Low
     -- | There are 4 basic object types you will use in Chipmunk.
 
     -- |
-    -- * __Rigid Bodies__ ('BodyPtr'): A rigid body holds the physical properties of an object.
+    -- * __Rigid Bodies__ ('Body'): A rigid body holds the physical properties of an object.
     -- (mass, position, rotation, velocity, etc.) It does not have a shape until you attach one or more collision shapes
     -- to it. If you’ve done physics with particles before, rigid bodies differ in that they are able to rotate.
     -- Rigid bodies generally tend to have a 1:1 correlation to sprites in a game.
     -- You should structure your game so that you use the position and rotation of the rigid body
     -- for drawing your sprite.
     --
-    -- * __Collision Shapes__ ('ShapePtr'): By attaching shapes to bodies, you can define the a body’s shape.
+    -- * __Collision Shapes__ ('Shape'): By attaching shapes to bodies, you can define the a body’s shape.
     -- You can attach as many shapes to a single body as you need to in order to define a complex shape.
     -- Shapes contain the surface properties of an object such as how much friction or elasticity it has.
     --
-    -- * __Constraints/Joints__ ('ConstraintPtr'): Constraints and joints describe how bodies are attached to each other.
+    -- * __Constraints/Joints__ ('Constraint'): Constraints and joints describe how bodies are attached to each other.
     --
-    -- * __Spaces__ ('SpacePtr'): Spaces are containers for simulating objects in Chipmunk.
+    -- * __Spaces__ ('Space'): Spaces are containers for simulating objects in Chipmunk.
     -- You add bodies, shapes and joints to a space and then update the space as a whole.
     -- They control how all the rigid bodies, shapes, and constraints interact together.
     --
@@ -193,7 +193,7 @@ module Chiphunk.Low
     -- ** Memory Management the Chipmunk way
 
     -- | For most of the structures you will use, Chipmunk uses a more or less standard and straightforward set
-    -- of memory management functions. Take the 'SpacePtr' struct for example:
+    -- of memory management functions. Take the 'Space' struct for example:
     --
     -- * 'spaceNew' — Allocates and initializes a 'Space' struct.
     --
@@ -275,7 +275,7 @@ module Chiphunk.Low
   , bbWrapVect
 
     -- * Chipmunk Rigid Bodies
-  , BodyPtr
+  , Body
 
     -- ** Dynamic, Kinematic, and Static Bodies
   , BodyType (..)
@@ -433,7 +433,7 @@ module Chiphunk.Low
     -- ** Sleeping Functions
 
     -- | Chipmunk supports a sleeping feature which improves performance by not simulating groups of objects
-    -- that aren’t moving. Read more about it in the 'SpacePtr' section.
+    -- that aren’t moving. Read more about it in the 'Space' section.
   , bodyIsSleeping
   , bodyActivate
   , bodySleep
@@ -450,7 +450,7 @@ module Chiphunk.Low
 
     -- * Chipmunk Collision Shapes
 
-  , ShapePtr
+  , Shape
 
     -- ** Properties
 
@@ -601,7 +601,7 @@ module Chiphunk.Low
     -- * Make sure you add both the body and its collision shapes to a space.
 
     -- * Chipmunk Spaces
-  , SpacePtr
+  , Space
 
     -- ** What Are Iterations, and Why Should I Care?
 
@@ -739,7 +739,7 @@ module Chiphunk.Low
     -- * Using more iterations or smaller time steps will increase the physics quality, but also increase the CPU usage.
 
     -- * Chipmunk Constraints
-  , ConstraintPtr
+  , Constraint
 
     -- ** What constraints are and what they are not
 
@@ -968,12 +968,18 @@ module Chiphunk.Low
     -- | * You can add multiple joints between two bodies, but make sure that they don’t fight.
     -- Doing so can cause the bodies jitter or spin violently.
 
+    -- * Misc
+  , DataPtr
+  , Transform (..)
+  , Arbiter
+
     -- * Re-exports
   , nullPtr
   ) where
 
 import Foreign
 
+import Chiphunk.Low.Types
 import Chiphunk.Low.Math
 import Chiphunk.Low.Helper
 import Chiphunk.Low.Vect

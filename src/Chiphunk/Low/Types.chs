@@ -9,12 +9,12 @@ module Chiphunk.Low.Types
   , BB (..)
   , BBPtr
   , DataPtr
-  , BodyPtr
+  , Body (..)
   , BodyType (..)
-  , SpacePtr
-  , ShapePtr
-  , ConstraintPtr
-  , ArbiterPtr
+  , Space (..)
+  , Shape (..)
+  , Constraint (..)
+  , Arbiter (..)
   , Transform (..)
   , TransformPtr
   ) where
@@ -82,10 +82,8 @@ instance Storable BB where
 -- | Pointer to user data.
 {# pointer cpDataPointer as DataPtr #}
 
-data Body
-
--- | Rigid body somewhere in C code. Can only use pointer to this type.
-{# pointer *cpBody as BodyPtr -> Body #}
+-- | Rigid body somewhere in C code.
+{# pointer *cpBody as Body newtype #}
 
 -- | Chipmunk supports three different types of bodies with unique behavioral and performance characteristics.
 data BodyType =
@@ -123,13 +121,9 @@ data BodyType =
 
 deriving instance Show BodyType
 
-data Space
-
 -- | Spaces in Chipmunk are the basic unit of simulation. You add rigid bodies, shapes, and constraints to the space
 -- and then step them all forward through time together.
-{# pointer *cpSpace as SpacePtr -> Space #}
-
-data Shape
+{# pointer *cpSpace as Space newtype #}
 
 -- | There are currently 3 collision shape types:
 --
@@ -143,19 +137,15 @@ data Shape
 --
 -- Combining multiple shapes gives you the flexibility to make any object you want
 -- as well as providing different areas of the same object with different friction, elasticity or callback values.
-{# pointer *cpShape as ShapePtr -> Shape #}
-
-data Constraint
+{# pointer *cpShape as Shape newtype #}
 
 -- | A constraint is something that describes how two bodies interact with each other. (how they constrain each other)
 -- Constraints can be simple joints that allow bodies to pivot around each other like the bones in your body,
 -- or they can be more abstract like the gear joint or motors.
-{# pointer *cpConstraint as ConstraintPtr -> Constraint #}
-
-data Arbiter
+{# pointer *cpConstraint as Constraint newtype #}
 
 -- | Chipmunk’s 'Arbiter' struct encapsulates a pair of colliding shapes and all of the data about their collision.
--- 'ArbiterPtr' is created when a collision starts, and persist until those shapes are no longer colliding.
+-- 'Arbiter' is created when a collision starts, and persist until those shapes are no longer colliding.
 --
 -- Why are they called arbiters? The short answer is that I kept using the word “arbitrates”
 -- to describe the way that collisions were resolved and then I saw that Box2D actually called them arbiters
@@ -163,7 +153,7 @@ data Arbiter
 -- An arbiter is like a judge, a person that has authority to settle disputes between two people.
 -- It was a fun, fitting name and was shorter to type than CollisionPair which I had been using.
 -- It was originally meant to be a private internal structure only, but evolved to be useful from callbacks.
-{# pointer *cpArbiter as ArbiterPtr -> Arbiter #}
+{# pointer *cpArbiter as Arbiter newtype #}
 
 -- | Type used for 2×3 affine transforms in Chipmunk.
 data Transform = Transform
