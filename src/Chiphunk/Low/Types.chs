@@ -17,6 +17,8 @@ module Chiphunk.Low.Types
   , Arbiter (..)
   , Transform (..)
   , TransformPtr
+  , CollisionType
+  , CPBool
   ) where
 
 import Data.Cross
@@ -179,3 +181,8 @@ instance Storable Transform where
 
 -- | Pointer to 'Transform'
 {# pointer *cpTransform as TransformPtr -> Transform #}
+
+-- | Collision type
+type CollisionType = WordPtr
+
+type CPBool = {# type cpBool #}

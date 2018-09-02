@@ -80,10 +80,10 @@ import Chiphunk.Low.Internal
 {# fun unsafe cpShapeSetSurfaceVelocity as shapeSetSurfaceVelocity {`Shape', with* %`Vect'} -> `()' #}
 
 -- | Get collision type of this shape.
-{# fun unsafe cpShapeGetCollisionType as shapeGetCollisionType {`Shape'} -> `WordPtr' fromIntegral #}
+{# fun unsafe cpShapeGetCollisionType as shapeGetCollisionType {`Shape'} -> `CollisionType' fromIntegral #}
 
 -- | You can assign types to Chipmunk collision shapes that trigger callbacks when objects of certain types touch.
-{# fun unsafe cpShapeSetCollisionType as shapeSetCollisionType {`Shape', fromIntegral `WordPtr'} -> `()' #}
+{# fun unsafe cpShapeSetCollisionType as shapeSetCollisionType {`Shape', fromIntegral `CollisionType'} -> `()' #}
 
 -- | Fast collision filtering type that is used to determine if two objects collide
 -- before calling collision or query callbacks.

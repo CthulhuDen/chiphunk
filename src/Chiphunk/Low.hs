@@ -968,6 +968,141 @@ module Chiphunk.Low
     -- | * You can add multiple joints between two bodies, but make sure that they don’t fight.
     -- Doing so can cause the bodies jitter or spin violently.
 
+    -- * Overview of Collision Detection in Chipmunk
+
+    --  | In order to make collision detection in Chipmunk as fast as possible, the process is broken down
+    -- into several stages. While I’ve tried to keep it conceptually simple, the implementation can be a bit daunting.
+    -- Fortunately as a user of the library, you don’t need to understand everything about how it works.
+    -- Though if you are trying to squeeze every bit of performance out of Chipmunk, understanding this section
+    -- can be helpful.
+
+    -- ** Spatial Indexing
+
+    -- | A for loop that checks every object against every other object in the scene would be very slow.
+    -- So the first stage of the collision detection, commonly called the broadphase, uses a high level
+    -- spatial algorithm to decide which pairs of objects to check for collisions.
+    -- Currently Chipmunk supports two spatial indexes, an axis-aligned bounding box tree and a spatial hash.
+    -- These spatial indexes are able to quickly identify which pairs of shapes are near each other
+    -- and should be checked for a collision.
+
+    -- ** Fast Collision Filtering
+
+    -- | After the spatial index figures out which pairs of shapes are likely to be near each other,
+    -- it passes each pair back to the space using a callback to perform some additional filtering on the pairs.
+    -- Before doing anything else, Chipmunk performs a few quick tests to check if shapes should collide.
+    --
+    -- * __Bounding Box Test__: The shapes are not colliding if their bounding boxes are not overlapping.
+    -- Objects like diagonal line segments can trigger a lot of false positives here,
+    -- but it’s unlikely to be something you should worry about.
+    --
+    -- * __Category Mask Test__: The categories of each shape are bitwise ANDed against the category mask
+    -- of the other shape. If either result is 0, the shapes do not collide.
+    --
+    -- * __Group Test__: Shapes shouldn’t collide with other shapes in the same non-zero group.
+
+    -- ** Constraint Based Filtering
+
+    -- | After fast collision filtering, Chipmunk checks the list of joints on one of the bodies
+    -- to see if it has a constraint that attaches it to the other body. If that constraint’s collideBodies
+    -- property is false, the collision will be ignored. This check is often very fast
+    -- since most scenes don’t contain a lot of constraints.
+
+    -- ** Primitive Shape to Shape Collision Detection
+
+    -- | The most expensive test is to actually check for overlap based on their geometry.
+    -- Circle to circle and circle to line collisions are very fast. Segment to segment and poly to poly collisions
+    -- are handled using the GJK/EPA algorithms, and get more expensive as the number of vertexes increases.
+    -- Simpler shapes make for faster collisions, and often more important, fewer collision points
+    -- for the solver to run. Chipmunk uses a small dispatch table to figure out which function to use to check
+    -- if the shapes overlap.
+    --
+    -- Without going into too much detail, the GJK algorithm checks the distance between two objects,
+    -- and the EPA algorithm checks how much they are overlapping. If you give you segment and poly shapes
+    -- a small radius when creating them, the EPA algorithm can usually be skipped, speeding up the collision detection
+    -- considerably. The radius should be at least as big as the amount of allowed collision slop.
+
+    -- ** Collision Handler Filtering
+
+    -- | After checking if two shapes overlap Chipmunk will look to see if you have defined a collision handler
+    -- for the collision types of the shapes. This is vital to process collisions events for the gameplay,
+    -- but also gives you a very flexible way to filter out collisions. The return value of the begin and preSolve
+    -- callbacks determines whether or not the colliding pair of shapes is discarded or not.
+    -- Returning true will keep the pair, false will discard it. Rejecting a collision from a begin callback
+    -- is permanent, rejecting it from the preSolve only applies to the step it occured in. If you don’t define
+    -- a handler for the given collision types, Chipmunk will call the space’s default handler, which by default
+    -- is defined to simply accept all collisions.
+    --
+    -- Wildcard collisions can also return a value, but they are handled in a more complicated way.
+    -- When you create a collision handler between two specific collision types, it’s your responsibility
+    -- to decide when to call the wildcard handlers and what to do with their return values.
+    -- Otherwise, the default is to call the wildcard handler for the first type, then the second type,
+    -- and use a logical AND of their return values as filtering value. See DefaultBegin() in cpSpace.c
+    -- for more information.
+    --
+    -- While using callbacks to filter collisions is the most flexible way, keep in mind that by the time your callback
+    -- is called all of the most expensive collision detection has already been done. For simulations
+    -- with a lot of colliding objects each frame, the time spent finding collisions is small compared to the time
+    -- spent solving the physics for them so it may not be a big deal. Fast collision filtering should be preferred
+    -- if possible.
+
+    -- * Collision Callbacks
+
+    -- | A physics library without any events or feedback would not be very useful for games.
+    -- How would you know when the player bumped into an enemy so that you could take some health points away?
+    -- How would you know how hard the car hit something so you don’t play a loud crash noise when a pebble hits it?
+    -- What if you need to decide if a collision should be ignored based on specific conditions,
+    -- like implementing one way platforms? Chipmunk has a number of powerful callback systems
+    -- that you can use to solve these problems.
+
+    -- ** Collision Handlers
+
+    -- | Collision handler function types. While all of them take an arbiter, space, and a user data pointer,
+    -- only the begin and preSolve callbacks return a value. See above for more information.
+  , CollisionCallback
+    -- Collision callbacks are closely associated with 'Arbiter' structs.
+    -- You should familiarize yourself with those as well.
+    --
+    -- __Note__: Shapes tagged as sensors (cpShape.sensor == true) never generate collisions that get processed,
+    -- so collisions between sensors shapes and other shapes will never call the postSolve callback.
+    -- They still generate begin, and separate callbacks, and the preSolve callback is also called
+    -- every frame even though there is no collision response.
+    --
+    -- __Note #2__: preSolve callbacks are called before the sleeping algorithm runs.
+    -- If an object falls asleep, its postSolve callback won’t be called until it’s reawoken.
+
+  , CollisionType
+  , CollisionHandler (..)
+  , CollisionHandlerPtr
+  , spaceAddCollisionHandler
+  , spaceAddWildcardHandler
+  , spaceAddDefaultCollisionHandler
+  , modifyCollisionHandler
+  , mkCallback
+  , mkCallbackB
+
+    -- ** Post-Step Callbacks
+
+    -- | Post-step callbacks are the one place where you can break the rules about adding or removing objects
+    -- from within a callback. In fact, their primary function is to help you safely remove objects from the space
+    -- that you wanted to disable or destroy in a collision or query callback.
+    --
+    -- Post step callbacks are registered as a function and a pointer that is used as a key.
+    -- You can only register one postStep callback per key. This prevents you from accidentally removing
+    -- an object more than once. For instance, say that you get a collision callback between a bullet and object A.
+    -- You want to destroy both the bullet and object A, so you register a postStep callback
+    -- to safely remove them from your game. Then you get a second collision callback between the bullet and object B.
+    -- You register a postStep callback to remove object B, and a second postStep callback to remove the bullet.
+    -- Because you can only register one callback per key, the postStep callback for the bullet
+    -- will only be called once and you can’t accidentally try to remove it twice.
+  , PostStepFunc
+  , spaceAddPostStepCallback
+
+    -- ** Examples
+
+    -- | See
+    -- <https://chipmunk-physics.net/release/ChipmunkLatest-Docs/examples.html#CollisionCallbacks the callback examples>
+    -- for more information.
+
     -- * Misc
   , DataPtr
   , Transform (..)
@@ -988,3 +1123,4 @@ import Chiphunk.Low.Body
 import Chiphunk.Low.Shape
 import Chiphunk.Low.Space
 import Chiphunk.Low.Constraint
+import Chiphunk.Low.Callback

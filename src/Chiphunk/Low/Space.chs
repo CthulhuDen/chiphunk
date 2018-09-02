@@ -225,4 +225,4 @@ foreign import ccall unsafe "wrapper"
 -- The easiest way to do constant timesteps is to simple step forward by 1/60th of a second
 -- (or whatever your target framerate is) for each frame regardless of how long it took to render.
 -- This works fine for many games, but a better way to do it is to separate your physics timestep and rendering.
-{# fun unsafe cpSpaceStep as spaceStep {`Space', `Double'} -> `()' #}
+{# fun cpSpaceStep as spaceStep {`Space', `Double'} -> `()' #}
