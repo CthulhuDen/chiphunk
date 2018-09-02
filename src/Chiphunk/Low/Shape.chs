@@ -24,6 +24,7 @@ module Chiphunk.Low.Shape
   , shapeSetUserData
   , shapeFree
   , shapeCacheBB
+  , shapeUpdate
   , circleShapeNew
   , segmentShapeNew
   , segmentShapeSetNeighbors
@@ -64,24 +65,18 @@ import Chiphunk.Low.Internal
 {# fun unsafe cpShapeGetElasticity as shapeGetElasticity {`ShapePtr'} -> `Double' #}
 
 -- | Set elasticity of the shape.
--- A value of 0 gives no bounce, while a value of 1 will give a “perfect” bounce.
--- However due to inaccuracies in the simulation using 1 or greater is not recommended.
--- The elasticity for a collision is found by multiplying the elasticity of the individual shapes together.
 {# fun unsafe cpShapeSetElasticity as shapeSetElasticity {`ShapePtr', `Double'} -> `()' #}
 
 -- | Get friction coefficient.
 {# fun unsafe cpShapeGetFriction as shapeGetFriction {`ShapePtr'} -> `Double' #}
 
--- | Set friction coefficient. Chipmunk uses the Coulomb friction model, a value of 0 is frictionless.
--- The friction for a collision is found by multiplying the friction of the individual shapes together.
+-- | Set friction coefficient.
 {# fun unsafe cpShapeSetFriction as shapeSetFriction {`ShapePtr', `Double'} -> `()' #}
 
 -- | Get the surface velocity of the object.
 {# fun unsafe w_cpShapeGetSurfaceVelocity as shapeGetSurfaceVelocity {`ShapePtr', alloca- `Vect' peek*} -> `()' #}
 
 -- | Set the surface velocity of the object.
--- Useful for creating conveyor belts or players that move around.
--- This value is only used when calculating friction, not resolving the collision.
 {# fun unsafe cpShapeSetSurfaceVelocity as shapeSetSurfaceVelocity {`ShapePtr', with* %`Vect'} -> `()' #}
 
 -- | Get collision type of this shape.
@@ -137,11 +132,18 @@ instance Storable ShapeFilter where
   , alloca- `BB' peek*
   } -> `()' #}
 
+-- | Sets the position and rotation of the shape
+{# fun unsafe w_cpShapeUpdate as shapeUpdate
+  { `ShapePtr'         -- ^ @shape@
+  , with* %`Transform'
+  , alloca- `BB' peek*
+  } -> `()' #}
+
 -- | Create new circle-like shape.
 {# fun unsafe cpCircleShapeNew as circleShapeNew
-  { `BodyPtr',  -- ^ The body to attack the circle to.
-  `Double',     -- ^ Radius of the circle.
-  with* %`Vect' -- ^ Offset from the body's center of gravity in body local coordinates.
+  { `BodyPtr'     -- ^ The body to attach the circle to.
+  , `Double'      -- ^ Radius of the circle.
+  , with* %`Vect' -- ^ Offset from the body's center of gravity in body local coordinates.
   } -> `ShapePtr' #}
 
 -- | Create new segment-shaped shape.
@@ -174,12 +176,17 @@ instance Storable ShapeFilter where
 -- Verticies must be provided with a counter-clockwise winding.
 {# fun unsafe cpPolyShapeNewRaw as polyShapeNewRaw {`BodyPtr', withList* `[Vect]'&, `Double'} -> `ShapePtr' #}
 
--- | The boxes will always be centered at the center of gravity of the body you are attaching them to.
--- Adding a small radius will bevel the corners and can significantly reduce problems
--- where the box gets stuck on seams in your geometry.
---
--- If you want to create an off-center box, you will need to use 'polyShapeNew'.
-{# fun unsafe cpBoxShapeNew as boxShapeNew {`BodyPtr', `Double', `Double', `Double'} -> `ShapePtr' #}
+-- | Createa box shape from dimensions.
+{# fun unsafe cpBoxShapeNew as boxShapeNew
+  { `BodyPtr' -- ^ The body to attach to
+  , `Double'  -- ^ Box width
+  , `Double'  -- ^ Box height
+  , `Double'  -- ^ Radius
+  } -> `ShapePtr' #}
 
--- | Alternative to 'boxShapeNew'. STILL creates box centered at the center of gravity of the body.
-{# fun unsafe cpBoxShapeNew2 as boxShapeNew2 {`BodyPtr', with* %`BB', `Double'} -> `ShapePtr' #}
+-- | Alternative to 'boxShapeNew' using 'BB' to set size.
+{# fun unsafe cpBoxShapeNew2 as boxShapeNew2
+  { `BodyPtr'   -- ^ The body to attach to
+  , with* %`BB' -- ^ Shape size
+  , `Double'    -- ^ Radius
+  } -> `ShapePtr' #}

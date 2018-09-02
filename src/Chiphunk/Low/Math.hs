@@ -4,11 +4,11 @@ module Chiphunk.Low.Math where
 
 import Data.VectorSpace
 
--- | Clamp @x@ to be between @a@ and @b@
+-- | Clamp @f@ to be between @min@ and @max@
 fClamp
-  :: Double -- ^ x
-  -> Double -- ^ a
-  -> Double -- ^ b
+  :: Double -- ^ f
+  -> Double -- ^ min
+  -> Double -- ^ max
   -> Double
 fClamp x a b
   | x < a     = a
@@ -23,10 +23,10 @@ fLerp
   -> Double
 fLerp = lerp
 
--- | Linearly interpolate from @x@ towards @y@ by no more than @d@.
+-- | Linearly interpolate from @f1@ towards @f2@ by no more than @d@.
 fLerpConst
-  :: Double -- ^ x
-  -> Double -- ^ y
+  :: Double -- ^ f1
+  -> Double -- ^ f2
   -> Double -- ^ d
   -> Double
 fLerpConst x y d = x + fClamp (y - x) (-d) d

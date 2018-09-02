@@ -52,6 +52,7 @@ module Chiphunk.Low.Body
   , bodyEachArbiter
   ) where
 
+import Chiphunk.Low.Vect
 import Control.Exception.Safe
 import Foreign
 
@@ -79,8 +80,7 @@ import Foreign
 -- | Get the type of a body (dynamic, kinematic, static).
 {# fun unsafe cpBodyGetType as bodyGetType {`BodyPtr'} -> `BodyType' #}
 
--- | Set the type of a body (dynamic, kinematic, static). See the documentation on 'BodyType' for more information.
--- When changing an body to a dynamic body,
+-- | Set the type of a body (dynamic, kinematic, static). When changing an body to a dynamic body,
 -- the mass and moment of inertia are recalculated from the shapes added to the body.
 -- Custom calculated moments of inertia are not preseved when changing types.
 -- This function cannot be called directly in a collision callback.
@@ -92,7 +92,7 @@ import Foreign
 -- | Set mass of the body.
 {# fun unsafe cpBodySetMass as bodySetMass {`BodyPtr', `Double'} -> `()' #}
 
--- | Moment of inertia (MoI or sometimes just moment) of the body. The moment is like the rotational mass of a body.
+-- | Get moment of inertia of the body.
 {# fun unsafe cpBodyGetMoment as bodyGetMoment {`BodyPtr'} -> `Double' #}
 
 -- | Set moment of inertial of the body. See below for function to help calculate the moment.
@@ -124,7 +124,7 @@ import Foreign
 -- | Set force applied to the center of gravity of the body. This value is reset for every time step.
 {# fun unsafe cpBodySetForce as bodySetForce {`BodyPtr', with* %`Vect'} -> `()' #}
 
--- | Get rotation of the body in radians. A body rotates around its center of gravity, not its position.
+-- | Get rotation of the body in radians.
 {# fun unsafe cpBodyGetAngle as bodyGetAngle {`BodyPtr'} -> `Double' #}
 
 -- | Set rotation of the body in radians.

@@ -24,6 +24,8 @@ void w_cpBodyGetVelocityAtLocalPoint(const cpBody *body, const cpVect point, cpV
 
 void w_cpShapeGetBB(const cpShape *shape, cpBB *out);
 
+void w_cpShapeUpdate(cpShape *shape, cpTransform transform, cpBB *out);
+
 void w_cpShapeGetSurfaceVelocity(const cpShape *shape, cpVect *out);
 
 void w_cpShapeGetFilter(const cpShape *shape, cpShapeFilter *out);
@@ -36,4 +38,4 @@ cpFloat w_cpBBSegmentQuery(cpBB bb, cpVect a, cpVect b);
 
 cpBool w_cpBBIntersectsSegment(cpBB bb, cpVect a, cpVect b);
 
-void w_cpSpaceGetGravity(const cpSpace *space, cpVect *out);
+void w_cpSpaceGetGravity(cpSpace *space, cpVect *out);

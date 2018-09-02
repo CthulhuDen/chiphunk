@@ -133,11 +133,11 @@ data Shape
 
 -- | There are currently 3 collision shape types:
 --
--- * Circles: Fastest and simplest collision shape.
+-- * __Circles__: Fastest and simplest collision shape.
 --
--- * Line segments: Meant mainly as a static shape. Can be beveled in order to give them a thickness.
+-- * __Line segments__: Meant mainly as a static shape. Can be beveled in order to give them a thickness.
 --
--- * Convex polygons: Slowest, but most flexible collision shape.
+-- * __Convex polygons__: Slowest, but most flexible collision shape.
 --
 -- You can add as many shapes to a body as you wish. That is why the two types are separate.
 --

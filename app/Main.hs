@@ -48,11 +48,11 @@ main = do
   -- stepping forward through time in small increments called steps.
   -- It is *highly* recommended to use a fixed size time step.
   let timeStep = 1/60
-  runFor 2 timeStep $ \t -> do
+  runFor 2 timeStep $ \time -> do
     pos <- bodyGetPosition ballBody
     vel <- bodyGetVelocity ballBody
     printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
-           t (vX pos) (vY pos) (vX vel) (vY vel)
+           time (vX pos) (vY pos) (vX vel) (vY vel)
 
     spaceStep space timeStep
 
@@ -61,8 +61,8 @@ main = do
   shapeFree ground
   spaceFree space
   where
-    runFor t s inner = go t
+    runFor time step inner = go time
       where
-        go t'
-          | t' <= 0   = pure ()
-          | otherwise = inner (t - t') *> go (t' - s)
+        go time'
+          | time' <= 0 = pure ()
+          | otherwise  = inner (time - time') *> go (time' - step)

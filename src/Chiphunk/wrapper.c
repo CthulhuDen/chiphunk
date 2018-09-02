@@ -75,6 +75,11 @@ void w_cpShapeCacheBB(cpShape *shape, cpBB *out)
   *out = cpShapeCacheBB(shape);
 }
 
+void w_cpShapeUpdate(cpShape *shape, cpTransform transform, cpBB *out)
+{
+  *out = cpShapeUpdate(shape, transform);
+}
+
 void w_cpCentroidForPoly(int count, const cpVect *vects, cpVect *out)
 {
   *out = cpCentroidForPoly(count, vects);
@@ -90,7 +95,7 @@ cpBool w_cpBBIntersectsSegment(cpBB bb, cpVect a, cpVect b)
   return cpBBIntersectsSegment(bb, a, b);
 }
 
-void w_cpSpaceGetGravity(const cpSpace *space, cpVect *out)
+void w_cpSpaceGetGravity(cpSpace *space, cpVect *out)
 {
   *out = cpSpaceGetGravity(space);
 }

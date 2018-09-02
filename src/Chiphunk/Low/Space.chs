@@ -58,7 +58,7 @@ import Chiphunk.Low.Vect
 -- | Get current iterations. Defaults to 10.
 {# fun unsafe cpSpaceGetIterations as spaceGetIterations {`SpacePtr'} -> `Int' #}
 
--- | Set current iterations. Iterations allow you to control the accuracy of the solver.
+-- | Set current iterations.
 {# fun unsafe cpSpaceSetIterations as spaceSetIterations {`SpacePtr', `Int'} -> `()' #}
 
 -- | Get global gravity applied to the space. Defaults to 'vZero'.
@@ -68,12 +68,10 @@ import Chiphunk.Low.Vect
 -- by writing custom integration functions. Changing the gravity will activate all sleeping bodies in the space.
 {# fun unsafe cpSpaceSetGravity as spaceSetGravity {`SpacePtr', with* %`Vect'} -> `()' #}
 
--- | Get amount of simple damping to apply to the space.
--- A value of 0.9 means that each body will lose 10% of its velocity per second. Defaults to 1.
+-- | Get amount of simple damping to apply to the space. Defaults to 1.
 {# fun unsafe cpSpaceGetDamping as spaceGetDamping {`SpacePtr'} -> `Double' #}
 
--- | Set amount of simple damping to apply to the space.
--- Like gravity, it can be overridden on a per body basis.
+-- | Set amount of simple damping to apply to the space. Like gravity, it can be overridden on a per body basis.
 {# fun unsafe cpSpaceSetDamping as spaceSetDamping {`SpacePtr', `Double'} -> `()' #}
 
 -- | Get speed threshold for a body to be considered idle.
@@ -97,21 +95,15 @@ import Chiphunk.Low.Vect
 -- To improve stability, set this as high as you can without noticable overlapping.
 {# fun unsafe cpSpaceSetCollisionSlop as spaceSetCollisionSlop {`SpacePtr', `Double'} -> `()' #}
 
--- | Chipmunk allows fast moving objects to overlap, then fixes the overlap over time.
--- Overlapping objects are unavoidable even if swept collisions are supported,
--- and this is an efficient and stable way to deal with overlapping objects.
--- The bias value controls what percentage of overlap remains unfixed after a second and defaults to ~0.2%.
--- The default value is calculated as cpfpow(1.0f - 0.1f, 60.0f)
+-- | Get collision bias. The default value is calculated as cpfpow(1.0f - 0.1f, 60.0f)
 -- meaning that Chipmunk attempts to correct 10% of error ever 1/60th of a second.
 {# fun unsafe cpSpaceGetCollisionBias as spaceGetCollisionBias {`SpacePtr'} -> `Double' #}
 
--- | Valid values are in the range from 0 to 1, but using 0 is not recommended for stability reasons.
--- Note: Very very few games will need to change this value.
+-- | Set collision bias. Valid values are in the range from 0 to 1, but using 0 is not recommended
+-- for stability reasons.
 {# fun unsafe cpSpaceSetCollisionBias as spaceSetCollisionBias {`SpacePtr', `Double'} -> `()' #}
 
--- | Get the number of frames the space keeps collision solutions around for.
--- Helps prevent jittering contacts from getting worse.
--- This defaults to 3
+-- | Get the number of frames the space keeps collision solutions around for. This defaults to 3
 {# fun unsafe cpSpaceGetCollisionPersistence as spaceGetCollisionPersistence {`SpacePtr'} -> `Word32' #}
 
 -- | Set the number of frames the space keeps collision solutions around for.
@@ -145,38 +137,31 @@ import Chiphunk.Low.Vect
 -- | Standard Chipmunk deallocation function.
 {# fun unsafe cpSpaceFree as spaceFree {`SpacePtr'} -> `()' #}
 
--- | These functions add and remove shapes, bodies and constraints from space.
--- The add/remove functions cannot be called from within a callback other than a 'postStep' callback
--- (which is different than a 'postSolve' callback!). Attempting to add or remove objects
--- from the space while 'spaceStep' is still executing will throw an assertion.
--- See the callbacks section for more information.
--- The add functions return the thing being added so that you can create and add something in one line.
--- Be careful not to free bodies before removing shapes and constraints attached to them or you will cause crashes..
--- The contains functions allow you to check if an object has been added to the space or not.
+-- | Add shape to the space.
 {# fun unsafe cpSpaceAddShape as spaceAddShape {`SpacePtr', `ShapePtr'} -> `()' #}
 
--- | See 'spaceAddShape'
+-- | Add body to the space.
 {# fun unsafe cpSpaceAddBody as spaceAddBody {`SpacePtr', `BodyPtr'} -> `()' #}
 
--- | See 'spaceAddShape'
+-- | Add constraint to the space.
 {# fun unsafe cpSpaceAddConstraint as spaceAddConstraint {`SpacePtr', `ConstraintPtr'} -> `()' #}
 
--- | See 'spaceAddShape'
+-- | Remove shape from the space.
 {# fun unsafe cpSpaceRemoveShape as spaceRemoveShape {`SpacePtr', `ShapePtr'} -> `()' #}
 
--- | See 'spaceAddShape'
+-- | Remove body from the space.
 {# fun unsafe cpSpaceRemoveBody as spaceRemoveBody {`SpacePtr', `BodyPtr'} -> `()' #}
 
--- | See 'spaceAddShape'
+-- | Remove constraint from the space.
 {# fun unsafe cpSpaceRemoveConstraint as spaceRemoveConstraint {`SpacePtr', `ConstraintPtr'} -> `()' #}
 
--- | See 'spaceAddShape'
+-- | Check if shape is attached to the space.
 {# fun unsafe cpSpaceContainsShape as spaceContainsShape {`SpacePtr', `ShapePtr'} -> `Bool' #}
 
--- | See 'spaceAddShape'
+-- | Check if body is attached to the space.
 {# fun unsafe cpSpaceContainsBody as spaceContainsBody {`SpacePtr', `BodyPtr'} -> `Bool' #}
 
--- | See 'spaceAddShape'
+-- | Check if constraint is attached to the space.
 {# fun unsafe cpSpaceContainsConstraint as spaceContainsConstraint {`SpacePtr', `ConstraintPtr'} -> `Bool' #}
 
 -- | Reindex a specific shape.
