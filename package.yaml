@@ -28,6 +28,7 @@ library:
   - Chiphunk.Low.Body
   - Chiphunk.Low.Shape
   - Chiphunk.Low.Space
+  - Chiphunk.Low.Constraint
   - Chiphunk.Low
   include-dirs:
   - Chipmunk2D-7.0.2/include

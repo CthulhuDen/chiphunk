@@ -39,3 +39,25 @@ cpFloat w_cpBBSegmentQuery(cpBB bb, cpVect a, cpVect b);
 cpBool w_cpBBIntersectsSegment(cpBB bb, cpVect a, cpVect b);
 
 void w_cpSpaceGetGravity(cpSpace *space, cpVect *out);
+
+void w_cpPinJointGetAnchorA(const cpConstraint *constraint, cpVect *out);
+
+void w_cpPinJointGetAnchorB(const cpConstraint *constraint, cpVect *out);
+
+void w_cpSlideJointGetAnchorA(const cpConstraint *constraint, cpVect *out);
+
+void w_cpSlideJointGetAnchorB(const cpConstraint *constraint, cpVect *out);
+
+void w_cpPivotJointGetAnchorA(const cpConstraint *constraint, cpVect *out);
+
+void w_cpPivotJointGetAnchorB(const cpConstraint *constraint, cpVect *out);
+
+void w_cpGrooveJointGetGrooveA(const cpConstraint *constraint, cpVect *out);
+
+void w_cpGrooveJointGetGrooveB(const cpConstraint *constraint, cpVect *out);
+
+void w_cpGrooveJointGetAnchorB(const cpConstraint *constraint, cpVect *out);
+
+void w_cpDampedSpringGetAnchorA(const cpConstraint *constraint, cpVect *out);
+
+void w_cpDampedSpringGetAnchorB(const cpConstraint *constraint, cpVect *out);

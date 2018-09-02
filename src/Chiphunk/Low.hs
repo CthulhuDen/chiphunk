@@ -376,8 +376,10 @@ module Chiphunk.Low
     -- *** The rotation vector
   , bodyGetRotation
 
-    -- *** Other
+    -- *** Space
   , bodyGetSpace
+
+    -- *** User Data
   , bodyGetUserData
   , bodySetUserData
 
@@ -493,8 +495,10 @@ module Chiphunk.Low
   , shapeGetFilter
   , shapeSetFilter
 
-    -- *** Other
+    -- *** Space
   , shapeGetSpace
+
+    -- *** User Data
   , shapeGetUserData
   , shapeSetUserData
 
@@ -668,9 +672,11 @@ module Chiphunk.Low
     -- *** Locked
   , spaceIsLocked
 
-    -- *** Other
+    -- *** User Data
   , spaceGetUserData
   , spaceSetUserData
+
+    -- *** Static Body
   , spaceGetStaticBody
 
     -- ** Memory Management Functions
@@ -727,8 +733,237 @@ module Chiphunk.Low
     --
     -- * Using more iterations or smaller time steps will increase the physics quality, but also increase the CPU usage.
 
-  -- * Re-exports
+    -- * Chipmunk Constraints
+  , ConstraintPtr
 
+    -- ** What constraints are and what they are not
+
+    -- | Constraints in Chipmunk are all velocity based constraints.
+    -- This means that they act primarily by synchronizing the velocity of two bodies.
+    -- A pivot joint holds two anchor points on two separate bodies together by defining equations that say
+    -- that the velocity of the anchor points must be the same and calculating impulses to apply to the bodies
+    -- to try and keep it that way. A constraint takes a velocity as it’s primary input and produces a velocity change
+    -- as its output. Some constraints, (joints in particular) apply velocity changes to correct differences
+    -- in positions. More about this in the next section.
+    --
+    -- A spring connected between two bodies is not a constraint. It’s very constraint-like as it creates forces
+    -- that affect the velocities of the two bodies, but a spring takes distances as input and produces forces
+    -- as its output. If a spring is not a constraint, then why do I have two varieties of spring constraints you ask?
+    -- The reason is because they are damped springs. The damping associated with the spring is a true constraint
+    -- that creates velocity changes based on the relative velocities of the two bodies it links.
+    -- As it is convenient to put a damper and a spring together most of the time, I figured I might as well just apply
+    -- the spring force as part of the constraint instead of having a damper constraint and having the user
+    -- calculate and apply their own spring forces separately.
+
+    -- ** Properties
+
+    -- *** Bodies
+  , constraintGetBodyA
+  , constraintGetBodyB
+
+    -- *** Maximum Force
+  , constraintGetMaxForce
+  , constraintSetMaxForce
+
+    -- *** Error Bias
+
+    -- | This works exactly the same as the collision bias property of a space, but applies to fixing error
+    -- (stretching) of joints instead of overlapping collisions.
+  , constraintGetErrorBias
+  , constraintSetErrorBias
+
+    -- *** Max Bias
+  , constraintGetMaxBias
+  , constraintSetMaxBias
+
+    -- *** Space
+  , constraintGetSpace
+
+    -- *** Bodies Collide?
+
+    -- | Constraints can be used for filtering collisions too. When two bodies collide, Chipmunk ignores the collisions
+    -- if this property is set to 'False' on any constraint that connects the two bodies.
+  , constraintGetCollideBodies
+  , constraintSetCollideBodies
+
+    -- *** User Data
+  , constraintGetUserData
+  , constraintSetUserData
+
+    -- *** Current Impulse
+  , constraintGetImpulse
+
+    -- ** Error correction by Feedback
+
+    -- | Joints in Chipmunk are not perfect. A pin joint can’t maintain the exact correct distance between its anchor
+    -- points, nor can a pivot joint hold its anchor points completely together. Instead, they are designed
+    -- to deal with this by correcting themselves over time. Since Chipmunk 5, you have a fair amount of extra control
+    -- over how joints correct themselves and can even use this ability to create physical effects
+    -- that allow you to use joints in unique ways:
+    --
+    -- * Servo motors – Ex: open/close doors or rotate things without going over a maximum force.
+    --
+    -- * Winches – Pull one object towards another at a constant speed without going over a maximum force.
+    --
+    -- * Mouse manipulation – Interact with objects smoothly given coarse/shaky mouse input.
+    --
+    -- There are three properties of 'Constraint' structs that control the error correction,
+    -- maxForce, maxBias, and biasCoef. maxForce is pretty self explanatory, a joint or constraint
+    -- will not be able to use more than this amount of force in order to function. If it needs more force
+    -- to be able to hold itself together, it will fall apart. maxBias is the maximum speed at which error correction
+    -- can be applied. If you change a property on a joint so that the joint will have to correct itself,
+    -- it normally does so very quickly. By setting a maxSpeed you can make the joint work like a servo,
+    -- correcting itself at a constant rate over a longer period of time. Lastly, biasCoef is the percentage
+    -- of error corrected every step before clamping to a maximum speed. You can use this
+    -- to make joints correct themselves smoothly instead of at a constant speed, but is probably the least useful
+    -- of the three properties by far.
+
+    -- ** Constraints and Collision Shapes
+
+    -- | Neither constraints or collision shapes have any knowledge of the other.
+    -- When connecting joints to a body the anchor points don’t need to be inside of any shapes attached to the body
+    -- and it often makes sense that they shouldn’t. Also, adding a constraint between two bodies
+    -- doesn’t prevent their collision shapes from colliding. In fact, this is the primary reason
+    -- that the collision group property exists.
+
+    -- ** Video Tour of Current Joint Types
+
+    -- | http://www.youtube.com/watch?v=ZgJJZTS0aMM
+
+    -- ** Shared Memory Management Functions
+  , constraintFree
+
+    -- ** Constraint Types
+
+    -- *** Pin Joints
+  , pinJointNew
+
+    -- **** Properties
+  , pinJointGetAnchorA
+  , pinJointSetAnchorA
+  , pinJointGetAnchorB
+  , pinJointSetAnchorB
+  , pinJointGetDist
+  , pinJointSetDist
+
+    -- *** Slide Joints
+  , slideJointNew
+
+    -- **** Properties
+  , slideJointGetAnchorA
+  , slideJointSetAnchorA
+  , slideJointGetAnchorB
+  , slideJointSetAnchorB
+  , slideJointGetMin
+  , slideJointSetMin
+  , slideJointGetMax
+  , slideJointSetMax
+
+    -- *** Pivot Joints
+
+    -- | (__Note for bindings__: So each instance of pivot joint can be replaced with pin joint with dist of 0?)
+
+  , pivotJointNew
+  , pivotJointNew2
+
+    -- **** Properties
+  , pivotJointGetAnchorA
+  , pivotJointSetAnchorA
+  , pivotJointGetAnchorB
+  , pivotJointSetAnchorB
+
+    -- *** Groove Joint
+  , grooveJointNew
+
+    -- **** Properties
+  , grooveJointGetGrooveA
+  , grooveJointSetGrooveA
+  , grooveJointGetGrooveB
+  , grooveJointSetGrooveB
+  , grooveJointGetAnchorB
+  , grooveJointSetAnchorB
+
+    -- *** Damped Spring
+  , dampedSpringNew
+
+    -- **** Properties
+  , dampedSpringGetAnchorA
+  , dampedSpringSetAnchorA
+  , dampedSpringGetAnchorB
+  , dampedSpringSetAnchorB
+  , dampedSpringGetRestLength
+  , dampedSpringSetRestLength
+  , dampedSpringGetStiffness
+  , dampedSpringSetStiffness
+  , dampedSpringGetDamping
+  , dampedSpringSetDamping
+
+    -- *** Damped Rotary Spring
+
+    -- | Like a damped spring, but works in an angular fashion.
+  , dampedRotarySpringNew
+
+    -- **** Properties
+  , dampedRotarySpringGetRestAngle
+  , dampedRotarySpringSetRestAngle
+  , dampedRotarySpringGetStiffness
+  , dampedRotarySpringSetStiffness
+  , dampedRotarySpringGetDamping
+  , dampedRotarySpringSetDamping
+
+    -- *** Rotary Limit Joint
+
+    -- | Constrains the relative rotations of two bodies.
+    -- It is implemented so that it’s possible to for the range to be greater than a full revolution.
+  , rotaryLimitJointNew
+
+    -- **** Properties
+  , rotaryLimitJointGetMin
+  , rotaryLimitJointSetMin
+  , rotaryLimitJointGetMax
+  , rotaryLimitJointSetMax
+
+    -- *** Ratchet Joint
+
+    -- | Works like a socket wrench.
+  , ratchetJointNew
+
+    -- **** Properties
+  , ratchetJointGetAngle
+  , ratchetJointSetAngle
+  , ratchetJointGetPhase
+  , ratchetJointSetPhase
+  , ratchetJointGetRatchet
+  , ratchetJointSetRatchet
+
+    -- *** Gear Joint
+
+    -- | Keeps the angular velocity ratio of a pair of bodies constant.
+  , gearJointNew
+
+    -- **** Properties
+  , gearJointGetPhase
+  , gearJointSetPhase
+  , gearJointGetRatio
+  , gearJointSetRatio
+
+    -- *** Simple Motor
+
+    -- | Keeps the relative angular velocity of a pair of bodies constant.
+    -- You will usually want to set an force (torque) maximum for motors as otherwise
+    -- they will be able to apply a nearly infinite torque to keep the bodies moving.
+  , simpleMotorNew
+
+    -- **** Properties
+  , simpleMotorGetRate
+  , simpleMotorSetRate
+
+    -- ** Notes
+
+    -- | * You can add multiple joints between two bodies, but make sure that they don’t fight.
+    -- Doing so can cause the bodies jitter or spin violently.
+
+    -- * Re-exports
   , nullPtr
   ) where
 
@@ -741,3 +976,4 @@ import Chiphunk.Low.BB
 import Chiphunk.Low.Body
 import Chiphunk.Low.Shape
 import Chiphunk.Low.Space
+import Chiphunk.Low.Constraint

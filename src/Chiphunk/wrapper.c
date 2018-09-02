@@ -99,3 +99,58 @@ void w_cpSpaceGetGravity(cpSpace *space, cpVect *out)
 {
   *out = cpSpaceGetGravity(space);
 }
+
+void w_cpPinJointGetAnchorA(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpPinJointGetAnchorA(constraint);
+}
+
+void w_cpPinJointGetAnchorB(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpPinJointGetAnchorB(constraint);
+}
+
+void w_cpSlideJointGetAnchorA(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpSlideJointGetAnchorA(constraint);
+}
+
+void w_cpSlideJointGetAnchorB(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpSlideJointGetAnchorB(constraint);
+}
+
+void w_cpPivotJointGetAnchorA(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpPivotJointGetAnchorA(constraint);
+}
+
+void w_cpPivotJointGetAnchorB(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpPivotJointGetAnchorB(constraint);
+}
+
+void w_cpGrooveJointGetGrooveA(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpGrooveJointGetGrooveA(constraint);
+}
+
+void w_cpGrooveJointGetGrooveB(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpGrooveJointGetGrooveB(constraint);
+}
+
+void w_cpGrooveJointGetAnchorB(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpGrooveJointGetAnchorB(constraint);
+}
+
+void w_cpDampedSpringGetAnchorA(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpDampedSpringGetAnchorA(constraint);
+}
+
+void w_cpDampedSpringGetAnchorB(const cpConstraint *constraint, cpVect *out)
+{
+  *out = cpDampedSpringGetAnchorB(constraint);
+}
