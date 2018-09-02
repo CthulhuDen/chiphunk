@@ -140,7 +140,8 @@ import Foreign
 {# fun unsafe cpConstraintGetImpulse as constraintGetImpulse {`Constraint'} -> `Double' #}
 
 -- | Free function is shared by all joint types. Allocation functions are specific to each joint type.
-{# fun unsafe cpConstraintFree as constraintFree {`Constraint'} -> `()' #}
+{# fun cpConstraintFree as constraintFree {`Constraint'} -> `()' #}
+-- no "unsafe" qualifier because I think it may trigger separte callbacks
 
 -- | Connect two bodies via anchor points on those bodies. The distance between the two anchor points is measured
 -- when the joint is created. If you want to set a specific distance, use the setter function to override it.

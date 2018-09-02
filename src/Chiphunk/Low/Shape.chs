@@ -124,7 +124,8 @@ instance Storable ShapeFilter where
 {# fun unsafe cpShapeSetUserData as shapeSetUserData {`Shape', `DataPtr'} -> `()' #}
 
 -- | Deallocates shape.
-{# fun unsafe cpShapeFree as shapeFree {`Shape'} -> `()' #}
+{# fun cpShapeFree as shapeFree {`Shape'} -> `()' #}
+-- no "unsafe" qualifier because I think it may trigger separte callbacks
 
 -- | Synchronizes @shape@ with the body its attached to.
 {# fun unsafe w_cpShapeCacheBB as shapeCacheBB

@@ -61,3 +61,11 @@ void w_cpGrooveJointGetAnchorB(const cpConstraint *constraint, cpVect *out);
 void w_cpDampedSpringGetAnchorA(const cpConstraint *constraint, cpVect *out);
 
 void w_cpDampedSpringGetAnchorB(const cpConstraint *constraint, cpVect *out);
+
+void w_cpArbiterGetSurfaceVelocity(cpArbiter *arbiter, cpVect *out);
+
+void w_cpArbiterGetNormal(const cpArbiter *arbiter, cpVect *out);
+
+void w_cpArbiterGetPointA(const cpArbiter *arbiter, int i, cpVect *out);
+
+void w_cpArbiterGetPointB(const cpArbiter *arbiter, int i, cpVect *out);

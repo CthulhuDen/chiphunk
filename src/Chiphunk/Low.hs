@@ -1103,10 +1103,71 @@ module Chiphunk.Low
     -- <https://chipmunk-physics.net/release/ChipmunkLatest-Docs/examples.html#CollisionCallbacks the callback examples>
     -- for more information.
 
+    -- * Chipmunk Collision Pairs
+  , Arbiter
+
+    -- ** Memory Management
+
+    -- | You will never need to create or free an arbiter. More importantly,
+    -- because they are entirely managed by the space you should never store a reference to an arbiter
+    -- as you don’t know when they will be freed or reused. Use them within the callback where they are given to you
+    -- and then forget about them or copy out the information you need.
+
+    -- ** Properties
+
+    -- *** Elasticity
+  , arbiterGetRestitution
+  , arbiterSetRestitution
+
+    -- *** Friction
+  , arbiterGetFriction
+  , arbiterSetFriction
+
+    -- *** Surface Velocity
+  , arbiterGetSurfaceVelocity
+  , arbiterSetSurfaceVelocity
+
+    -- *** User Data
+  , arbiterGetUserData
+  , arbiterSetUserData
+
+    -- *** Collision Point(s)
+  , arbiterGetCount
+  , arbiterGetNormal
+  , arbiterGetPointA
+  , arbiterGetPointB
+  , arbiterGetDepth
+
+    -- *** Other
+  , arbiterIsFirstContact
+  , arbiterIsRemoval
+
+    -- *** Bodies and shapes
+  , arbiterGetShapes
+  , arbiterGetBodies
+
+    -- *** Running wildcard handlers
+
+    -- | These functions invoke the wildcard handlers for a given collision. For custom collision handlers
+    -- between specific types or overriding the default handler, you must decide how to invoke the wildcard handlers
+    -- since it may be important to call the wildcards first, last, or possibly skip them entirely.
+    -- For the begin and preSolve callbacks, you also need to decide what to do with their return values
+    -- since they may not agree with each other or the specific handler they were called from.
+    -- Every collision handler is defined for two types, the “A” variants of these functions call the wildcard handler
+    -- for the first type, and the “B” variants call the handler for the second type.
+
+  , arbiterCallWildcardBeginA
+  , arbiterCallWildcardBeginB
+  , arbiterCallWildcardPreSolveA
+  , arbiterCallWildcardPreSolveB
+  , arbiterCallWildcardPostSolveA
+  , arbiterCallWildcardPostSolveB
+  , arbiterCallWildcardSeparateA
+  , arbiterCallWildcardSeparateB
+
     -- * Misc
   , DataPtr
   , Transform (..)
-  , Arbiter
 
     -- * Re-exports
   , nullPtr
@@ -1124,3 +1185,4 @@ import Chiphunk.Low.Shape
 import Chiphunk.Low.Space
 import Chiphunk.Low.Constraint
 import Chiphunk.Low.Callback
+import Chiphunk.Low.Arbiter

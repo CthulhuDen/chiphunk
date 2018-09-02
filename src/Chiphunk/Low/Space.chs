@@ -135,7 +135,8 @@ import Chiphunk.Low.Vect
 {# fun unsafe cpSpaceNew as spaceNew {} -> `Space' #}
 
 -- | Standard Chipmunk deallocation function.
-{# fun unsafe cpSpaceFree as spaceFree {`Space'} -> `()' #}
+{# fun cpSpaceFree as spaceFree {`Space'} -> `()' #}
+-- no "unsafe" qualifier because I think it may trigger separte callbacks
 
 -- | Add shape to the space.
 {# fun unsafe cpSpaceAddShape as spaceAddShape {`Space', `Shape'} -> `()' #}
@@ -147,13 +148,16 @@ import Chiphunk.Low.Vect
 {# fun unsafe cpSpaceAddConstraint as spaceAddConstraint {`Space', `Constraint'} -> `()' #}
 
 -- | Remove shape from the space.
-{# fun unsafe cpSpaceRemoveShape as spaceRemoveShape {`Space', `Shape'} -> `()' #}
+{# fun cpSpaceRemoveShape as spaceRemoveShape {`Space', `Shape'} -> `()' #}
+-- no "unsafe" qualifier because I think it may trigger separte callbacks
 
 -- | Remove body from the space.
-{# fun unsafe cpSpaceRemoveBody as spaceRemoveBody {`Space', `Body'} -> `()' #}
+{# fun cpSpaceRemoveBody as spaceRemoveBody {`Space', `Body'} -> `()' #}
+-- no "unsafe" qualifier because I think it may trigger separte callbacks
 
 -- | Remove constraint from the space.
-{# fun unsafe cpSpaceRemoveConstraint as spaceRemoveConstraint {`Space', `Constraint'} -> `()' #}
+{# fun cpSpaceRemoveConstraint as spaceRemoveConstraint {`Space', `Constraint'} -> `()' #}
+-- no "unsafe" qualifier because I think it may trigger separte callbacks
 
 -- | Check if shape is attached to the space.
 {# fun unsafe cpSpaceContainsShape as spaceContainsShape {`Space', `Shape'} -> `Bool' #}

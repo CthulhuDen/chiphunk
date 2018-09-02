@@ -75,7 +75,8 @@ import Foreign
 {# fun unsafe cpBodyNewStatic as bodyNewStatic {} -> `Body' #}
 
 -- | Be careful not to free a body before any shapes or constraints attached to it have been removed from a space.
-{# fun unsafe cpBodyFree as bodyFree {`Body'} -> `()' #}
+{# fun cpBodyFree as bodyFree {`Body'} -> `()' #}
+-- no "unsafe" qualifier because I think it may trigger separte callbacks
 
 -- | Get the type of a body (dynamic, kinematic, static).
 {# fun unsafe cpBodyGetType as bodyGetType {`Body'} -> `BodyType' #}

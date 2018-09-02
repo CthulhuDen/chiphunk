@@ -154,3 +154,23 @@ void w_cpDampedSpringGetAnchorB(const cpConstraint *constraint, cpVect *out)
 {
   *out = cpDampedSpringGetAnchorB(constraint);
 }
+
+void w_cpArbiterGetSurfaceVelocity(cpArbiter *arbiter, cpVect *out)
+{
+  *out = cpArbiterGetSurfaceVelocity(arbiter);
+}
+
+void w_cpArbiterGetNormal(const cpArbiter *arbiter, cpVect *out)
+{
+  *out = cpArbiterGetNormal(arbiter);
+}
+
+void w_cpArbiterGetPointA(const cpArbiter *arbiter, int i, cpVect *out)
+{
+  *out = cpArbiterGetPointA(arbiter, i);
+}
+
+void w_cpArbiterGetPointB(const cpArbiter *arbiter, int i, cpVect *out)
+{
+  *out = cpArbiterGetPointB(arbiter, i);
+}

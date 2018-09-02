@@ -87,6 +87,12 @@ instance Storable BB where
 -- | Rigid body somewhere in C code.
 {# pointer *cpBody as Body newtype #}
 
+instance Storable Body where
+  sizeOf (Body p)    = sizeOf p
+  alignment (Body p) = alignment p
+  poke p (Body b)    = poke (castPtr p) b
+  peek p             = Body <$> peek (castPtr p)
+
 -- | Chipmunk supports three different types of bodies with unique behavioral and performance characteristics.
 data BodyType =
     BodyTypeDynamic
@@ -127,6 +133,12 @@ deriving instance Show BodyType
 -- and then step them all forward through time together.
 {# pointer *cpSpace as Space newtype #}
 
+instance Storable Space where
+  sizeOf (Space p)    = sizeOf p
+  alignment (Space p) = alignment p
+  poke p (Space b)    = poke (castPtr p) b
+  peek p              = Space <$> peek (castPtr p)
+
 -- | There are currently 3 collision shape types:
 --
 -- * __Circles__: Fastest and simplest collision shape.
@@ -141,10 +153,22 @@ deriving instance Show BodyType
 -- as well as providing different areas of the same object with different friction, elasticity or callback values.
 {# pointer *cpShape as Shape newtype #}
 
+instance Storable Shape where
+  sizeOf (Shape p)    = sizeOf p
+  alignment (Shape p) = alignment p
+  poke p (Shape b)    = poke (castPtr p) b
+  peek p              = Shape <$> peek (castPtr p)
+
 -- | A constraint is something that describes how two bodies interact with each other. (how they constrain each other)
 -- Constraints can be simple joints that allow bodies to pivot around each other like the bones in your body,
 -- or they can be more abstract like the gear joint or motors.
 {# pointer *cpConstraint as Constraint newtype #}
+
+instance Storable Constraint where
+  sizeOf (Constraint p)    = sizeOf p
+  alignment (Constraint p) = alignment p
+  poke p (Constraint b)    = poke (castPtr p) b
+  peek p                   = Constraint <$> peek (castPtr p)
 
 -- | Chipmunk’s 'Arbiter' struct encapsulates a pair of colliding shapes and all of the data about their collision.
 -- 'Arbiter' is created when a collision starts, and persist until those shapes are no longer colliding.
@@ -156,6 +180,12 @@ deriving instance Show BodyType
 -- It was a fun, fitting name and was shorter to type than CollisionPair which I had been using.
 -- It was originally meant to be a private internal structure only, but evolved to be useful from callbacks.
 {# pointer *cpArbiter as Arbiter newtype #}
+
+instance Storable Arbiter where
+  sizeOf (Arbiter p)    = sizeOf p
+  alignment (Arbiter p) = alignment p
+  poke p (Arbiter b)    = poke (castPtr p) b
+  peek p                = Arbiter <$> peek (castPtr p)
 
 -- | Type used for 2×3 affine transforms in Chipmunk.
 data Transform = Transform

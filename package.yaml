@@ -33,6 +33,7 @@ library:
   - Chiphunk.Low.Space
   - Chiphunk.Low.Constraint
   - Chiphunk.Low.Callback
+  - Chiphunk.Low.Arbiter
   include-dirs:
   - Chipmunk2D-7.0.2/include
   - src/Chiphunk
