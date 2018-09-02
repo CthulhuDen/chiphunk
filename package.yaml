@@ -1,7 +1,7 @@
 name:                chiphunk
 version:             0.1.0.0
-#synopsis:
-#description:
+synopsis:            Haskell bindings for Chipmunk2D physics engine
+description:         See "Chiphunk.Low" for documentation
 homepage:            https://github.com/CthulhuDen/chiphunk#readme
 license:             BSD3
 author:              Cthulhu
