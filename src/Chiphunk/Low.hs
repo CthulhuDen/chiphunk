@@ -1,11 +1,16 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 
+-- | Description: Low-level Haskell bindings to Chipmunk2D physics library
+-- Chiphunk is a __low-level__ Haskell bindings for the <https://chipmunk-physics.net/ Chipmunk2D physics engine>.
+-- It includes most (almost all) of the functions mentioned in the main documentation for Chipmunk2D,
+-- except for some (relatively) exotic ones, which may be added later per request.
 module Chiphunk.Low
-  ( -- * chiphunk
+  ( -- * Disclaymer
 
-    -- | Chiphunk is a __low-level__ bindings library for the <https://chipmunk-physics.net/ Chipmunk2D physics engine>.
-    -- It includes most (almost all) of the functions mentioned in the main documentation for Chipmunk2D,
-    -- except for some (relatively) exotic ones, which may be added later per request.
+    -- | This bindings are so low-level so that they even require you to free the memory the Chipmunk2D has allocated
+    -- for your objects. Module with more high-level api can be built around this low-level bingings at some point,
+    -- in the meantime, however, you're advised to provide wrapper layer for your games so that you do not have to
+    -- keep track of such things in the core of your game's logic.
     --
     -- See below for an adoptation of the original Chipmunk documentation available
     -- <https://chipmunk-physics.net/release/ChipmunkLatest-Docs/ here>. I've skipped some sections not related
@@ -13,7 +18,7 @@ module Chiphunk.Low
     -- Obviously, it's thanks to that choice that I was able to write bindings around the library in Haskell.
     --
     -- __Howling Moon Software is not affiliated with this bindings.__
-    -- __In all of the following \"I\" refers to the original documentation author.__
+    -- __In all of the following \"I\" refers to the original documentation author for Chipmunk2D.__
 
     -- * Chipmunk2D 7.0.2
 
