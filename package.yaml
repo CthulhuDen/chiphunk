@@ -86,9 +86,14 @@ executables:
     source-dirs:     app
     main:            Main.hs
     ghc-options:
+    - -threaded
     - -O2
     dependencies:
     - chiphunk
+    - gloss
+    - async
+    - lens
+    - containers
 
 flags:
   library-only:

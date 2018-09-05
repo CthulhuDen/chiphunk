@@ -1,10 +1,23 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Main where
 
 import Chiphunk.Low
 import Text.Printf
+import Control.Concurrent.MVar
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.Async
+
+import qualified Gloss.Data as G
+import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
 
 main :: IO ()
 main = do
+  dm <- newEmptyMVar
+  race_ (simulate dm) (display dm)
+
+simulate :: MVar [VisObj] -> IO ()
+simulate dm = do
   let gravity = Vect 0 (-100)
 
   -- Create an empty space.
@@ -15,7 +28,9 @@ main = do
   -- We'll make it slightly tilted so the ball will roll off.
   -- We attach it to a static body to tell Chipmunk it shouldn't be movable.
   static <- spaceGetStaticBody space
-  ground <- segmentShapeNew static (Vect (-20) 5) (Vect 20 (-5)) 0
+  let (segA, segB) = (Vect (-20) 5, Vect 20 (-5))
+  ground <- segmentShapeNew static segA segB 0
+  shapeSetElasticity ground 0.7
   shapeSetFriction ground 1
   spaceAddShape space ground
 
@@ -35,14 +50,17 @@ main = do
   -- It's convenient to create and add an object in one line.
   ballBody <- bodyNew mass moment
   spaceAddBody space ballBody
-  bodySetPosition ballBody (Vect 0 15)
+  bodySetPosition ballBody (Vect (-15) 15)
+
+  putMVar dm [mkStaticObj $ Segment segA segB, mkBallBody ballBody radius]
 
   -- Now we create the collision shape for the ball.
   -- You can create multiple collision shapes that point to the same body.
   -- They will all be attached to the body and move around to follow it.
   ballShape <- circleShapeNew ballBody radius (Vect 0 0)
   spaceAddShape space ballShape
-  shapeSetFriction ballShape 0.7
+  shapeSetFriction ballShape 0.9
+  shapeSetElasticity ballShape 0.7
 
   -- Now that it's all set up, we simulate all the objects in the space by
   -- stepping forward through time in small increments called steps.
@@ -55,6 +73,7 @@ main = do
            time (vX pos) (vY pos) (vX vel) (vY vel)
 
     spaceStep space timeStep
+    threadDelay $ round $ 1000000 * timeStep
 
   shapeFree ballShape
   bodyFree ballBody
@@ -66,3 +85,49 @@ main = do
         go time'
           | time' <= 0 = pure ()
           | otherwise  = inner (time - time') *> go (time' - step)
+
+display :: MVar [VisObj] -> IO ()
+display dm = do
+  d <- takeMVar dm
+  quit <- newEmptyMVar
+  race_ (takeMVar quit) $
+   G.playIO (G.InWindow "chiphunk" (500, 500) (0, 0))
+           (G.makeColor 0.5 0.5 0.5 1)
+           60 ()
+           (\() -> G.Pictures <$> mapM render d)
+           (\e _ () -> case e of
+              -- Still not working, because playIO somehow ignores exception thrown from 'race_'!
+              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit ()
+              _                                         -> pure ())
+           (\_ _ () -> pure ())
+  where
+    render (VisObj ioS) = ioS >>= \case
+      Segment (Vect ax ay) (Vect bx by) -> pure $
+        G.Line [(t ax, t ay), (t bx, t by)]
+      Ball (Vect x y) r a -> pure $ G.Translate (t x) (t y) $ G.Rotate (t (-a)) $
+        G.Pictures
+        [ G.Circle (t r)
+        , G.Line [(0, 0), (t r / 2, 0)]
+        ]
+    t :: Double -> Float
+    t = realToFrac . (*10)
+
+data VisShape =
+    Segment
+    { segEndpointA :: Vect
+    , segEndpointB :: Vect
+    }
+  | Ball
+    { ballCenter :: Vect
+    , ballRadius :: Double
+    , ballAngle :: Double
+    }
+  deriving Show
+
+newtype VisObj = VisObj (IO VisShape)
+
+mkStaticObj :: VisShape -> VisObj
+mkStaticObj = VisObj . pure
+
+mkBallBody :: Body -> Double -> VisObj
+mkBallBody b r = VisObj $ Ball <$> bodyGetPosition b <*> pure r <*> bodyGetAngle b
