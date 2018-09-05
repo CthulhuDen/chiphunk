@@ -2,19 +2,60 @@
 
 module Main where
 
+import qualified Graphics.Rendering.OpenGL      as GL
+import qualified Graphics.UI.GLUT               as GLUT
+import Graphics.UI.GLUT                           (get,($=))
 import Chiphunk.Low
 import Text.Printf
+import Data.Functor
 import Control.Concurrent.MVar
-import Control.Concurrent (threadDelay)
+import Control.Concurrent (threadDelay, myThreadId)
 import Control.Concurrent.Async
+import Control.Exception.Safe
 
 import qualified Gloss.Data as G
 import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
 
 main :: IO ()
 main = do
-  dm <- newEmptyMVar
-  race_ (simulate dm) (display dm)
+  (_progName, _args)  <- GLUT.getArgsAndInitialize
+  glutVersion         <- get GLUT.glutVersion
+  GLUT.initialDisplayMode
+    $= [ GLUT.RGBMode
+       , GLUT.DoubleBuffered
+       ]
+
+  GLUT.initialWindowSize
+    $= GL.Size 300 300
+
+  GLUT.initialWindowPosition
+    $= GL.Position 500 500
+
+  _ <- GLUT.createWindow "chiphunk"
+
+  GLUT.windowSize
+    $= GL.Size 300 300
+
+  --  Switch some things.
+  --  auto repeat interferes with key up / key down checks.
+  --  BUGS: this doesn't seem to work?
+  GLUT.perWindowKeyRepeat   $= GLUT.PerWindowKeyRepeatOff
+
+  m <- newEmptyMVar
+  concurrently_ (runGlut m) (waitAndKill m)
+  where
+    runGlut m = do
+      myThreadId >>= putMVar m
+      GLUT.mainLoop
+    waitAndKill m = do
+      threadDelay 1000000
+      pid <- takeMVar m
+      putStrLn "Got PID, going to kill it!"
+      throwTo pid  MyError
+      putStrLn "Done!!!"
+
+  -- dm <- newEmptyMVar
+  -- race_ (simulate dm) (display dm)
 
 simulate :: MVar [VisObj] -> IO ()
 simulate dm = do
@@ -86,18 +127,28 @@ simulate dm = do
           | time' <= 0 = pure ()
           | otherwise  = inner (time - time') *> go (time' - step)
 
+data MyError = MyError
+
+instance Show MyError where
+  show MyError = "my error"
+
+instance Exception MyError
+
+
 display :: MVar [VisObj] -> IO ()
 display dm = do
   d <- takeMVar dm
   quit <- newEmptyMVar
-  race_ (takeMVar quit) $
+  race_ (takeMVar quit >>= (\tId -> putStrLn "TAKE DONE" $> tId) >>= (`throwTo` MyError) ) $
    G.playIO (G.InWindow "chiphunk" (500, 500) (0, 0))
            (G.makeColor 0.5 0.5 0.5 1)
            60 ()
            (\() -> G.Pictures <$> mapM render d)
            (\e _ () -> case e of
               -- Still not working, because playIO somehow ignores exception thrown from 'race_'!
-              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit ()
+              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> do
+                myThreadId >>= putMVar quit
+                putStrLn "PUT DONE"
               _                                         -> pure ())
            (\_ _ () -> pure ())
   where
