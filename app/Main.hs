@@ -18,44 +18,44 @@ import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playI
 
 main :: IO ()
 main = do
-  (_progName, _args)  <- GLUT.getArgsAndInitialize
-  glutVersion         <- get GLUT.glutVersion
-  GLUT.initialDisplayMode
-    $= [ GLUT.RGBMode
-       , GLUT.DoubleBuffered
-       ]
+--  (_progName, _args)  <- GLUT.getArgsAndInitialize
+--  glutVersion         <- get GLUT.glutVersion
+--  GLUT.initialDisplayMode
+--    $= [ GLUT.RGBMode
+--       , GLUT.DoubleBuffered
+--       ]
+--
+--  GLUT.initialWindowSize
+--    $= GL.Size 300 300
+--
+--  GLUT.initialWindowPosition
+--    $= GL.Position 500 500
+--
+--  _ <- GLUT.createWindow "chiphunk"
+--
+--  GLUT.windowSize
+--    $= GL.Size 300 300
+--
+--  --  Switch some things.
+--  --  auto repeat interferes with key up / key down checks.
+--  --  BUGS: this doesn't seem to work?
+--  GLUT.perWindowKeyRepeat   $= GLUT.PerWindowKeyRepeatOff
+--
+--  m <- newEmptyMVar
+--  concurrently_ (runGlut m) (waitAndKill m)
+--  where
+--    runGlut m = do
+--      myThreadId >>= putMVar m
+--      GLUT.mainLoop
+--    waitAndKill m = do
+--      threadDelay 1000000
+--      pid <- takeMVar m
+--      putStrLn "Got PID, going to kill it!"
+--      throwTo pid  MyError
+--      putStrLn "Done!!!"
 
-  GLUT.initialWindowSize
-    $= GL.Size 300 300
-
-  GLUT.initialWindowPosition
-    $= GL.Position 500 500
-
-  _ <- GLUT.createWindow "chiphunk"
-
-  GLUT.windowSize
-    $= GL.Size 300 300
-
-  --  Switch some things.
-  --  auto repeat interferes with key up / key down checks.
-  --  BUGS: this doesn't seem to work?
-  GLUT.perWindowKeyRepeat   $= GLUT.PerWindowKeyRepeatOff
-
-  m <- newEmptyMVar
-  concurrently_ (runGlut m) (waitAndKill m)
-  where
-    runGlut m = do
-      myThreadId >>= putMVar m
-      GLUT.mainLoop
-    waitAndKill m = do
-      threadDelay 1000000
-      pid <- takeMVar m
-      putStrLn "Got PID, going to kill it!"
-      throwTo pid  MyError
-      putStrLn "Done!!!"
-
-  -- dm <- newEmptyMVar
-  -- race_ (simulate dm) (display dm)
+  dm <- newEmptyMVar
+  race_ (simulate dm) (display dm)
 
 simulate :: MVar [VisObj] -> IO ()
 simulate dm = do
