@@ -94,9 +94,6 @@ executables:
     - async
     - lens
     - containers
-    - safe-exceptions
-    - GLUT
-    - OpenGL
 
 flags:
   library-only:

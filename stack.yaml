@@ -6,9 +6,3 @@ packages:
 extra-deps:
 - ./gloss-1.13.0.1
 - gloss-rendering-1.13.0.1
-- GLFW-b-1.4.8.4
-
-flags:
-  gloss:
-    GLFW: true
-    GLUT: false

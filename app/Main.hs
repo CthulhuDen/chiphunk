@@ -1,78 +1,40 @@
 {-# LANGUAGE LambdaCase #-}
-
 module Main where
 
-import qualified Graphics.Rendering.OpenGL      as GL
-import qualified Graphics.UI.GLUT               as GLUT
-import Graphics.UI.GLUT                           (get,($=))
 import Chiphunk.Low
 import Text.Printf
 import Data.Functor
+import Control.Monad
 import Control.Concurrent.MVar
-import Control.Concurrent (threadDelay, myThreadId)
+import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async
-import Control.Exception.Safe
 
 import qualified Gloss.Data as G
 import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
 
 main :: IO ()
 main = do
---  (_progName, _args)  <- GLUT.getArgsAndInitialize
---  glutVersion         <- get GLUT.glutVersion
---  GLUT.initialDisplayMode
---    $= [ GLUT.RGBMode
---       , GLUT.DoubleBuffered
---       ]
---
---  GLUT.initialWindowSize
---    $= GL.Size 300 300
---
---  GLUT.initialWindowPosition
---    $= GL.Position 500 500
---
---  _ <- GLUT.createWindow "chiphunk"
---
---  GLUT.windowSize
---    $= GL.Size 300 300
---
---  --  Switch some things.
---  --  auto repeat interferes with key up / key down checks.
---  --  BUGS: this doesn't seem to work?
---  GLUT.perWindowKeyRepeat   $= GLUT.PerWindowKeyRepeatOff
---
---  m <- newEmptyMVar
---  concurrently_ (runGlut m) (waitAndKill m)
---  where
---    runGlut m = do
---      myThreadId >>= putMVar m
---      GLUT.mainLoop
---    waitAndKill m = do
---      threadDelay 1000000
---      pid <- takeMVar m
---      putStrLn "Got PID, going to kill it!"
---      throwTo pid  MyError
---      putStrLn "Done!!!"
-
   dm <- newEmptyMVar
   race_ (simulate dm) (display dm)
 
 simulate :: MVar [VisObj] -> IO ()
 simulate dm = do
   let gravity = Vect 0 (-100)
-
   -- Create an empty space.
   space <- spaceNew
+  spaceSetIterations space 100
   spaceSetGravity space gravity
+
+  static <- spaceGetStaticBody space
 
   -- Add a static line segment shape for the ground.
   -- We'll make it slightly tilted so the ball will roll off.
   -- We attach it to a static body to tell Chipmunk it shouldn't be movable.
-  static <- spaceGetStaticBody space
-  let (segA, segB) = (Vect (-20) 5, Vect 20 (-5))
+  let (segA, segB) = (Vect (-20) (-5), Vect 20 (-25))
   ground <- segmentShapeNew static segA segB 0
-  shapeSetElasticity ground 0.7
+  shapeSetElasticity ground 0.6
   shapeSetFriction ground 1
+
   spaceAddShape space ground
 
   -- Now let's make a ball that falls onto the line and rolls off.
@@ -82,39 +44,57 @@ simulate dm = do
 
   let radius = 5
   let mass = 1
+  let mass100 = 100
 
   -- The moment of inertia is like mass for rotation
   -- Use the cpMomentFor*() functions to help you approximate it.
   let moment = momentForCircle mass 0 radius (Vect 0 0)
+  let moment100 = momentForCircle mass100 0 radius (Vect 0 0)
 
   -- The cpSpaceAdd*() functions return the thing that you are adding.
   -- It's convenient to create and add an object in one line.
   ballBody <- bodyNew mass moment
   spaceAddBody space ballBody
-  bodySetPosition ballBody (Vect (-15) 15)
-
-  putMVar dm [mkStaticObj $ Segment segA segB, mkBallBody ballBody radius]
 
   -- Now we create the collision shape for the ball.
   -- You can create multiple collision shapes that point to the same body.
   -- They will all be attached to the body and move around to follow it.
   ballShape <- circleShapeNew ballBody radius (Vect 0 0)
-  spaceAddShape space ballShape
   shapeSetFriction ballShape 0.9
-  shapeSetElasticity ballShape 0.7
+  shapeSetElasticity ballShape 1
+  spaceAddShape space ballShape
 
-  -- Now that it's all set up, we simulate all the objects in the space by
-  -- stepping forward through time in small increments called steps.
-  -- It is *highly* recommended to use a fixed size time step.
-  let timeStep = 1/60
-  runFor 2 timeStep $ \time -> do
-    pos <- bodyGetPosition ballBody
-    vel <- bodyGetVelocity ballBody
-    printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
-           time (vX pos) (vY pos) (vX vel) (vY vel)
+  anotherBall <- bodyNew mass100 moment100
+  spaceAddBody space anotherBall
 
-    spaceStep space timeStep
-    threadDelay $ round $ 1000000 * timeStep
+  anotherBallShape <- circleShapeNew anotherBall radius (Vect 0 0)
+  shapeSetFriction anotherBallShape 0.9
+  shapeSetElasticity anotherBallShape 0.4
+  spaceAddShape space anotherBallShape
+
+  putMVar dm [mkStaticObj $ Segment segA segB, mkBallBody ballBody radius, mkBallBody anotherBall radius]
+
+  void $ forever $ do
+    bodySetPosition ballBody (Vect (-15) 30)
+    bodySetPosition anotherBall (Vect (-5) 75)
+    -- need to reset ball velocity after previous iteration
+    bodySetVelocity ballBody (Vect 0 0)
+    bodySetAngularVelocity ballBody 0
+    bodySetVelocity anotherBall (Vect 0 0)
+    bodySetAngularVelocity anotherBall 0
+
+    -- Now that it's all set up, we simulate all the objects in the space by
+    -- stepping forward through time in small increments called steps.
+    -- It is *highly* recommended to use a fixed size time step.
+    let timeStep = 1/240
+    runFor 3 timeStep $ \time -> do
+      pos <- bodyGetPosition ballBody
+      vel <- bodyGetVelocity ballBody
+      printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
+             time (vX pos) (vY pos) (vX vel) (vY vel)
+
+      spaceStep space timeStep
+      threadDelay $ round $ 1000000 * timeStep
 
   shapeFree ballShape
   bodyFree ballBody
@@ -127,28 +107,17 @@ simulate dm = do
           | time' <= 0 = pure ()
           | otherwise  = inner (time - time') *> go (time' - step)
 
-data MyError = MyError
-
-instance Show MyError where
-  show MyError = "my error"
-
-instance Exception MyError
-
-
 display :: MVar [VisObj] -> IO ()
 display dm = do
   d <- takeMVar dm
   quit <- newEmptyMVar
-  race_ (takeMVar quit >>= (\tId -> putStrLn "TAKE DONE" $> tId) >>= (`throwTo` MyError) ) $
+  race_ (takeMVar quit) $
    G.playIO (G.InWindow "chiphunk" (500, 500) (0, 0))
            (G.makeColor 0.5 0.5 0.5 1)
            60 ()
            (\() -> G.Pictures <$> mapM render d)
            (\e _ () -> case e of
-              -- Still not working, because playIO somehow ignores exception thrown from 'race_'!
-              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> do
-                myThreadId >>= putMVar quit
-                putStrLn "PUT DONE"
+              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit ()
               _                                         -> pure ())
            (\_ _ () -> pure ())
   where
