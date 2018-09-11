@@ -58,7 +58,7 @@ data GLFWState
         , idle          :: IO ()
 
         -- | The Window Handle
-        , winHdl        :: GLFW.Window 
+        , winHdl        :: GLFW.Window
         }
 
 
@@ -98,6 +98,8 @@ instance Backend GLFWState where
 initializeGLFW :: IORef GLFWState -> Bool-> IO ()
 initializeGLFW _ debug
  = do
+        GLFW.setErrorCallback $ Just $ \err msg -> do
+          putStrLn $ "GLFW error " <> show err <> ": " <> msg
         _                   <- GLFW.init
         glfwVersion         <- GLFW.getVersion
 
@@ -131,15 +133,17 @@ openWindowGLFW
         -> IO ()
 
 openWindowGLFW ref (InWindow title (sizeX, sizeY) pos)
- = do   win <- GLFW.createWindow 
+ = do   win <- GLFW.createWindow
                 sizeX
                 sizeY
                 title
                 Nothing
-                Nothing 
+                Nothing
 
         modifyIORef' ref (\s -> s { winHdl = fromJust win})
         uncurry (GLFW.setWindowPos (fromJust win)) pos
+
+        GLFW.makeContextCurrent win
 
         -- Try to enable sync-to-vertical-refresh by setting the number
         -- of buffer swaps per vertical refresh to 1.
@@ -152,14 +156,16 @@ openWindowGLFW ref FullScreen
         let sizeX = GLFW.videoModeWidth (fromJust vmode)
         let sizeY = GLFW.videoModeHeight (fromJust vmode)
 
-        win <- GLFW.createWindow 
+        win <- GLFW.createWindow
                 sizeX
                 sizeY
                 ""
                 mon
-                Nothing 
+                Nothing
 
         modifyIORef' ref (\s -> s { winHdl = fromJust win})
+
+        GLFW.makeContextCurrent win
 
         -- Try to enable sync-to-vertical-refresh by setting the number
         -- of buffer swaps per vertical refresh to 1.
@@ -179,10 +185,10 @@ dumpStateGLFW :: IORef GLFWState -> IO ()
 dumpStateGLFW ref
  = do   win         <- windowHandle ref
         (ww,wh)     <- GLFW.getWindowSize win
-        
+
 -- GLFW-b does not provide a general function to query windowHints
 -- could be added by adding additional getWindowHint which
--- uses glfwGetWindowAttrib behind the scenes as has been done 
+-- uses glfwGetWindowAttrib behind the scenes as has been done
 -- already for e.g. getWindowVisible which uses glfwGetWindowAttrib
 {-
         r           <- GLFW.getWindowHint NumRedBits
@@ -360,9 +366,9 @@ callbackChar
 callbackChar stateRef callbacks win char -- keystate
  = do   (GLFWState mods pos _ _ _ _ _) <- readIORef stateRef
         let key'      = charToSpecial char
-        -- TODO: is this correct? GLFW does not provide the keystate 
+        -- TODO: is this correct? GLFW does not provide the keystate
         -- in a character callback, here we asume that its pressed
-        let keystate = True 
+        let keystate = True
 
         -- Only key presses of characters are passed to this callback,
         -- character key releases are caught by the 'keyCallback'. This is an
@@ -382,7 +388,7 @@ callbackChar stateRef callbacks win char -- keystate
 callbackMouseButton
         :: IORef GLFWState -> [Callback]
         -> GLFW.MouseButtonCallback -- = Window -> MouseButton -> MouseButtonState -> ModifierKeys -> IO ()
-        
+
 callbackMouseButton stateRef callbacks win key keystate modifier
  = do   (GLFWState mods pos _ _ _ _ _) <- readIORef stateRef
         let key'      = fromGLFW key
@@ -401,7 +407,7 @@ callbackMouseWheel
         -- -> Int
         -- -> IO ()
 -- ScrollCallback = Window -> Double -> Double -> IO ()
-callbackMouseWheel stateRef callbacks win x y 
+callbackMouseWheel stateRef callbacks win x y
  = do   (key, keystate)  <- setMouseWheel stateRef (floor x)
         (GLFWState mods pos _ _ _ _ _) <- readIORef stateRef
 
@@ -489,14 +495,15 @@ runMainLoopGLFW stateRef
  = X.catch go exit
  where
   exit :: X.SomeException -> IO ()
-  exit e = print e >> exitGLFW stateRef
+  exit e = print e >> exitGLFW stateRef >> X.throwIO e
 
   go   :: IO ()
   go
-   = 
+   =
      do win <- windowHandle stateRef
-        windowIsOpen <- GLFW.windowShouldClose win
-        when (windowIsOpen || True)
+        GLFW.getTime >>= print
+        windowIsOpen <- not <$> GLFW.windowShouldClose win
+        when windowIsOpen
          $ do  GLFW.pollEvents
                dirty <- fmap dirtyScreen $ readIORef stateRef
 

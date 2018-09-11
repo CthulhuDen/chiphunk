@@ -12,17 +12,170 @@ import Control.Concurrent.Async
 import qualified Gloss.Data as G
 import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
 
+import           Foreign.Storable
+import           Foreign.Ptr
+import           Foreign.Marshal.Array
+import           Control.Exception.Safe
+import qualified Graphics.Rendering.OpenGL.GL as GL
+import qualified Graphics.Rendering.OpenGL.GLU as GL
+import           Graphics.Rendering.OpenGL.GL (($=), get)
+import qualified Graphics.UI.GLFW as GLFW
+
+data Coords = Coords
+  { coordX :: !Float
+  , coordY :: !Float
+  }
+
+instance Storable Coords where
+  sizeOf _    = 2 * sizeOf (undefined :: Float)
+  alignment _ = alignment (undefined :: Float)
+  poke p (Coords x y) = poke (castPtr p) x *> pokeElemOff (castPtr p) 1 y
+  peek p = Coords <$> peek (castPtr p) <*> peekElemOff (castPtr p) 1
+
+data Vertex = Vertex
+  { vertCoords :: !Coords
+  }
+
+instance Storable Vertex where
+  sizeOf _ = sizeOf (undefined :: Coords)
+  alignment _ = alignment (undefined :: Coords)
+  poke p (Vertex c) = poke (castPtr p) c
+  peek p = Vertex <$> peek (castPtr p)
+
 main :: IO ()
 main = do
-  dm <- newEmptyMVar
-  race_ (simulate dm) (display dm)
+  vertPtr <- newArray vertices
+
+  win <- initGLFW
+  prog <- initGL (length vertices) vertPtr
+  loop win prog
+  finalize win
+  where
+    vertices =
+      [ Vertex $ Coords (-0.6) (-0.6)
+      , Vertex $ Coords 0 0.6
+      , Vertex $ Coords 0.6 (-0.6)
+      ]
+
+    vertexShaderSource = GL.packUtf8 $ unlines
+      [ "#version 150 core"
+      , ""
+      , "in vec2 position;"
+      , ""
+      , "uniform mat4 mvp;"
+      , ""
+      , "void main()"
+      , "{"
+      , "  gl_Position = mvp * vec4(position, 0.0, 1.0);"
+      , "}"
+      ]
+
+    fragmentShaderSource = GL.packUtf8 $ unlines
+      [ "#version 150 core"
+      , ""
+      , "out vec4 color;"
+      , ""
+      , "void main()"
+      , "{"
+      , "  color = vec4(1.0, 1.0, 1.0, 1.0);"
+      , "}"
+      ]
+
+    initGLFW = do
+      GLFW.setErrorCallback $ Just $ \err msg ->
+        putStrLn $ "Error " <> show err <> ": " <> msg
+      do res <- GLFW.init
+         when (not res) $ throwString "Could not initialize GLFW"
+      GLFW.windowHint $ GLFW.WindowHint'ContextVersionMajor 3
+      GLFW.windowHint $ GLFW.WindowHint'ContextVersionMinor 2
+      win <- GLFW.createWindow 500 500 "glfw" Nothing Nothing >>= \case
+        Just win -> pure win
+        Nothing  -> do
+          GLFW.terminate
+          throwString "Could not create window"
+      GLFW.makeContextCurrent $ Just win
+      pure win
+
+    initGL vertCount vertPtr = do
+      vao <- GL.genObjectName
+      GL.bindVertexArrayObject $= Just vao
+
+      vertex_buffer <- GL.genObjectName
+      GL.bindBuffer GL.ArrayBuffer $= Just vertex_buffer
+      GL.bufferData GL.ArrayBuffer $= (fromIntegral $ vertCount * sizeOf (undefined :: Vertex), vertPtr, GL.StaticDraw)
+
+      vert <- makeShader GL.VertexShader vertexShaderSource
+      frag <- makeShader GL.FragmentShader fragmentShaderSource
+
+      prog <- GL.createProgram
+      GL.attachShader prog vert
+      GL.attachShader prog frag
+      GL.bindFragDataLocation prog "color" $= 0
+      GL.linkProgram prog
+
+      pos <- GL.get $ GL.attribLocation prog "position"
+      GL.vertexAttribArray pos $= GL.Enabled
+      GL.vertexAttribPointer pos $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float 0 nullPtr)
+
+      GL.currentProgram $= Just prog
+
+      pure prog
+      where
+        makeShader typ source = do
+          shader <- GL.createShader typ
+          GL.shaderSourceBS shader $= source
+          GL.compileShader shader
+
+          res <- get $ GL.compileStatus shader
+          compLog <- get $ GL.shaderInfoLog shader
+
+          unless res $ throwString $ "Shader compilation FAILED: \n" <> compLog
+          unless (null compLog) $ throwString $ "Shader compiled with warnings: \n===\n" <> compLog <> "\n===\n"
+
+          pure shader
+
+    loop win prog = do
+      uniMvp <- GL.get $ GL.uniformLocation prog "mvp"
+      go uniMvp
+      where
+        go uniMvp = do
+          shouldClose <- GLFW.windowShouldClose win
+          unless shouldClose $ do
+            checkGLError
+
+            (width, height) <- GLFW.getFramebufferSize win
+            GL.viewport $= (GL.Position 0 0, GL.Size (fromIntegral width) (fromIntegral height))
+
+            GL.clear [GL.ColorBuffer]
+
+            m <- get $ GL.matrix $ Just $ GL.Modelview 0 :: IO (GL.GLmatrix GL.GLfloat)
+            GL.loadIdentity
+
+            GL.uniformv uniMvp $= m
+
+            GL.drawArrays GL.Triangles 0 3
+
+            GLFW.swapBuffers win
+
+            GLFW.pollEvents
+
+            go uniMvp
+        checkGLError = get GL.errors >>= \case
+          []  -> pure ()
+          ers -> throwString $ "OpenGL reported errors: " <> show ers
+
+    finalize win = do
+      GLFW.destroyWindow win
+      GLFW.terminate
+
+  -- dm <- newEmptyMVar
+  -- race_ (simulate dm) (display dm)
 
 simulate :: MVar [VisObj] -> IO ()
 simulate dm = do
   let gravity = Vect 0 (-100)
   -- Create an empty space.
   space <- spaceNew
-  spaceSetIterations space 100
   spaceSetGravity space gravity
 
   static <- spaceGetStaticBody space
@@ -86,7 +239,7 @@ simulate dm = do
     -- Now that it's all set up, we simulate all the objects in the space by
     -- stepping forward through time in small increments called steps.
     -- It is *highly* recommended to use a fixed size time step.
-    let timeStep = 1/240
+    let timeStep = 1/60
     runFor 3 timeStep $ \time -> do
       pos <- bodyGetPosition ballBody
       vel <- bodyGetVelocity ballBody

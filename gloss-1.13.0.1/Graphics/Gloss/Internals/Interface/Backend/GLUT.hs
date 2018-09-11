@@ -1,5 +1,4 @@
 {-# OPTIONS_HADDOCK hide #-}
-{-# LANGUAGE Rank2Types #-}
 module Graphics.Gloss.Internals.Interface.Backend.GLUT
         (GLUTState,glutStateInit,initializeGLUT)
 where
@@ -7,7 +6,6 @@ where
 import Data.IORef
 import Control.Monad
 import Control.Concurrent
-import Data.Maybe                                 (isNothing)
 import Graphics.UI.GLUT                           (get,($=))
 import qualified Graphics.Rendering.OpenGL as GL
 import qualified Graphics.UI.GLUT               as GLUT
@@ -25,10 +23,6 @@ glutInitialized :: IORef Bool
 {-# NOINLINE glutInitialized #-}
 glutInitialized = unsafePerformIO $ do newIORef False
 
-newtype IdleCallback' = IdleCallback' (IO ())
-instance Show IdleCallback' where
-  show _ = "<<IdleCallback>>"
-
 -- | State information for the GLUT backend.
 data GLUTState
         = GLUTState
@@ -39,7 +33,7 @@ data GLUTState
         , glutStateHasTimeout   :: Bool
 
           -- Bool to remember if we've set the idle callback.
-        , glutStateIdle         :: Maybe IdleCallback' }
+        , glutStateHasIdle      :: Bool }
         deriving Show
 
 
@@ -49,7 +43,7 @@ glutStateInit
         = GLUTState
         { glutStateFrameCount   = 0
         , glutStateHasTimeout   = False
-        , glutStateIdle         = Nothing }
+        , glutStateHasIdle      = False }
 
 
 instance Backend GLUTState where
@@ -74,13 +68,8 @@ instance Backend GLUTState where
 
         -- Call the GLUT mainloop.
         -- This function will return when something calls GLUT.leaveMainLoop
-        runMainLoop stateRef = go
-          where
-            go = forever $ do GLUT.mainLoopEvent 
-                              mIdle <- glutStateIdle <$> readIORef stateRef
-                              case mIdle of
-                                  Just (IdleCallback' idle) -> idle
-                                  Nothing                   -> return ()
+        runMainLoop _
+         =      GLUT.mainLoop
 
         postRedisplay _
          =      GLUT.postRedisplay Nothing
@@ -248,7 +237,7 @@ callbackDisplay refState callbacks
         --
         state   <- readIORef refState
         when (  (not $ glutStateHasTimeout state)
-             && (isNothing $ glutStateIdle state))
+             && (not $ glutStateHasIdle    state))
          $ do
                 -- Setting the timer interrupt to 1sec keeps CPU usage for a
                 -- single process to < 0.5% or so on OSX. This is the rate
@@ -362,10 +351,9 @@ installIdleCallbackGLUT refState callbacks
         -- then don't install one that just does nothing. If we do then GLUT
         -- will still call us back after whenever it's idle and waste CPU time.
         | any isIdleCallback callbacks
-        = do    let idle = Just (callbackIdle refState callbacks)
-                GLUT.idleCallback $= idle
+        = do    GLUT.idleCallback $= Just (callbackIdle refState callbacks)
                 atomicModifyIORef' refState
-                 $ \state -> (state { glutStateIdle = IdleCallback' <$> idle }, ())
+                 $ \state -> (state { glutStateHasIdle = True }, ())
 
         | otherwise
         = return ()

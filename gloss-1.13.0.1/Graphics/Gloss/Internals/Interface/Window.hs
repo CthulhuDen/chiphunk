@@ -32,7 +32,7 @@ createWindow
         eatBackend
  = do
         -- Turn this on to spew debugging info to stdout
-        let debug       = True
+        let debug       = False
 
         -- Initialize backend state
         backendStateRef <- newIORef backend

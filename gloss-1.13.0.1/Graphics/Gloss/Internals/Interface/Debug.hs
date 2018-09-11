@@ -62,6 +62,6 @@ dumpFragmentState
 
         putStr  $  "* dumpFragmentState\n"
                 ++ "  blend              = " ++ show blend              ++ "\n"
-                -- ++ "  blend equation     = " ++ show blendEquation      ++ "\n"
-                -- ++ "  blend func         = " ++ show blendFunc          ++ "\n"
+                ++ "  blend equation     = " ++ show blendEquation      ++ "\n"
+                ++ "  blend func         = " ++ show blendFunc          ++ "\n"
                 ++ "\n"

@@ -6,6 +6,7 @@ module Gloss.Data
  , module Control.Lens
  ) where
 
+import           Data.Functor
 import           Data.Char (toLower)
 import           Data.Maybe (fromMaybe)
 import qualified Data.Sequence as Seq
@@ -161,7 +162,7 @@ playIO display color fps world render handle update =
               return $ ss & ssState .~ gs
                           & ssWorld .~ w
                           & ssInited .~ True
-          _ -> error "Impossible"
+          _ -> print evt $> ss -- *> error "Impossible"
     update' secs ss
       | ss ^. ssInited = do
           w <- update secs (ss ^. ssState) $ ss ^. ssWorld

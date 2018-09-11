@@ -95,6 +95,10 @@ executables:
     - lens
     - containers
 
+    - safe-exceptions
+    - OpenGL
+    - GLFW-b
+
 flags:
   library-only:
     manual: false
