@@ -13,31 +13,28 @@ import Control.Concurrent.Async
 import qualified Gloss.Data as G
 import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
 
-import           Control.Lens
-
-mainGloss :: IO ()
-mainGloss = do
-  quit <- newEmptyMVar
-  race_ (takeMVar quit) $
-    G.playIO (G.InWindow "chiphunk" (500, 500) (0, 0))
-            (G.makeColor 0.5 0.5 0.5 1)
-            60 (G.blank, 0)
-            (\(pic, rot) -> pure $ G.Rotate rot pic)
-            (\e st (pic, !rot) ->
-                case e of
-                  G.MouseClick G.LeftButton G.Down -> do
-                    let !x = st ^. G.stPos.G.posX
-                        !y = st ^. G.stPos.G.posY
-                    pure (G.pictures [pic,  G.circle 20 & G.translate x y & G.rotate (-rot)], rot)
-                  G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit () $> (pic, rot)
-                  _                                         -> pure (pic, rot))
-            (\elapsed _ (pic, rot) -> pure (pic, rot + 90 * realToFrac elapsed))
+import           Data.IORef
 
 main :: IO ()
 main = do
-  mainGloss
-  -- dm <- newEmptyMVar
-  -- race_ (simulate dm) (display dm)
+  dm <- newEmptyMVar
+  race_
+    -- (simulate dm)
+    (simulateFake dm)
+    (display dm)
+
+simulateFake :: MVar [VisObj] -> IO ()
+simulateFake dm = do
+  c <- newIORef $ Ball (Vect 10 10) 2 45
+  putMVar dm [mkRefObj c]
+
+  go (1/60) 0 c
+  where
+    go step alpha c = do
+      let alpha' = alpha + pi * step / 2
+      writeIORef c $ Ball (Vect (10 * cos alpha') (10 * sin alpha')) 2 45
+      threadDelay $ round $ 1000000 * step
+      go step alpha' c
 
 simulate :: MVar [VisObj] -> IO ()
 simulate dm = do
@@ -93,7 +90,11 @@ simulate dm = do
   shapeSetElasticity anotherBallShape 0.4
   spaceAddShape space anotherBallShape
 
-  putMVar dm [mkStaticObj $ Segment segA segB, mkBallBody ballBody radius, mkBallBody anotherBall radius]
+  putMVar dm
+    [ mkStaticObj $ Segment segA segB
+    , mkBallBody ballBody radius
+    , mkBallBody anotherBall radius
+    ]
 
   void $ forever $ do
     bodySetPosition ballBody (Vect (-15) 30)
@@ -109,12 +110,12 @@ simulate dm = do
     -- It is *highly* recommended to use a fixed size time step.
     let timeStep = 1/60
     runFor 3 timeStep $ \time -> do
-      pos <- bodyGetPosition ballBody
-      vel <- bodyGetVelocity ballBody
-      printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
-             time (vX pos) (vY pos) (vX vel) (vY vel)
+      -- pos <- bodyGetPosition ballBody
+      -- vel <- bodyGetVelocity ballBody
+      -- printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
+             -- time (vX pos) (vY pos) (vX vel) (vY vel)
 
-      spaceStep space timeStep
+      -- spaceStep space timeStep
       threadDelay $ round $ 1000000 * timeStep
 
   shapeFree ballShape
@@ -135,17 +136,20 @@ display dm = do
   race_ (takeMVar quit) $
    G.playIO (G.InWindow "chiphunk" (500, 500) (0, 0))
            (G.makeColor 0.5 0.5 0.5 1)
-           60 ()
-           (\() -> G.Pictures <$> mapM render d)
-           (\e _ () -> case e of
-              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit ()
-              _                                         -> pure ())
-           (\_ _ () -> pure ())
+           60 (0 :: Int)
+           (\_ -> do
+               pic <- G.Pictures <$> mapM render d
+               print pic
+               pure pic)
+           (\e _ s -> case e of
+              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit () $> s
+              _                                         -> pure s)
+           (\_ _ !s -> pure $ s + 1)
   where
     render (VisObj ioS) = ioS >>= \case
       Segment (Vect ax ay) (Vect bx by) -> pure $
         G.Line [(t ax, t ay), (t bx, t by)]
-      Ball (Vect x y) r a -> pure $ G.Translate (t x) (t y) $ G.Rotate (t (-a)) $
+      Ball (Vect x y) r a -> pure $ G.Translate (t x) (t y) $ G.Rotate (realToFrac (-a)) $
         G.Pictures
         [ G.Circle (t r)
         , G.Line [(0, 0), (t r / 2, 0)]
@@ -166,6 +170,9 @@ data VisShape =
   deriving Show
 
 newtype VisObj = VisObj (IO VisShape)
+
+mkRefObj :: IORef VisShape -> VisObj
+mkRefObj r = VisObj $ readIORef r
 
 mkStaticObj :: VisShape -> VisObj
 mkStaticObj = VisObj . pure
