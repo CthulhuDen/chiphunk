@@ -1,5 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DeriveGeneric #-}
 module Main where
 
 import Chiphunk.Low
@@ -13,187 +13,29 @@ import Control.Concurrent.Async
 import qualified Gloss.Data as G
 import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
 
-import           Foreign.Storable
-import           Foreign.Storable.Generic
-import           Foreign.Ptr
-import           Foreign.Marshal hiding (void)
-import           Control.Exception.Safe
-import qualified Graphics.Rendering.OpenGL.GL as GL
-import qualified Graphics.Rendering.OpenGL.GLU as GL
-import           Graphics.Rendering.OpenGL.GL (($=), get)
-import qualified Graphics.UI.GLFW as GLFW
-import           Generics.Deriving
-import           Numeric.Matrix
+import           Control.Lens
 
-data Coords = Coords
-  { coordX :: !Float
-  , coordY :: !Float
-  } deriving (Generic)
-
-instance GStorable Coords
-
-data Color = Color
-  { colRed :: !Float
-  , colGreen :: !Float
-  , colBlue :: !Float
-  } deriving (Generic)
-
-instance GStorable Color
-
-data Vertex = Vertex
-  { vertCoords :: !Coords
-  , vertColor :: !Color
-  } deriving (Generic)
-
-instance GStorable Vertex
+mainGloss :: IO ()
+mainGloss = do
+  quit <- newEmptyMVar
+  race_ (takeMVar quit) $
+    G.playIO (G.InWindow "chiphunk" (500, 500) (0, 0))
+            (G.makeColor 0.5 0.5 0.5 1)
+            60 (G.blank, 0)
+            (\(pic, rot) -> pure $ G.Rotate rot pic)
+            (\e st (pic, !rot) ->
+                case e of
+                  G.MouseClick G.LeftButton G.Down -> do
+                    let !x = st ^. G.stPos.G.posX
+                        !y = st ^. G.stPos.G.posY
+                    pure (G.pictures [pic,  G.circle 20 & G.translate x y & G.rotate (-rot)], rot)
+                  G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit () $> (pic, rot)
+                  _                                         -> pure (pic, rot))
+            (\elapsed _ (pic, rot) -> pure (pic, rot + 90 * realToFrac elapsed))
 
 main :: IO ()
 main = do
-  vertPtr <- newArray vertices
-
-  win <- initGLFW
-  prog <- initGL (length vertices) vertPtr
-  loop win prog
-  finalize win
-  where
-    vertices =
-      [ Vertex (Coords (-0.6) (-0.4)) (Color 1 0 0)
-      , Vertex (Coords 0      0.6)    (Color 0 1 0)
-      , Vertex (Coords 0.6    (-0.4)) (Color 0 0 1)
-      ]
-
-    vertexShaderSource = GL.packUtf8 $ unlines
-      [ "#version 150 core"
-      , ""
-      , "in vec2 position;"
-      , "in vec3 color;"
-      , ""
-      , "out vec3 fragColor;"
-      , ""
-      , "uniform mat4 mvp;"
-      , ""
-      , "void main()"
-      , "{"
-      , "  gl_Position = mvp * vec4(position, 0.0, 1.0);"
-      , "  fragColor = color;"
-      , "}"
-      ]
-
-    fragmentShaderSource = GL.packUtf8 $ unlines
-      [ "#version 150 core"
-      , ""
-      , "in vec3 fragColor;"
-      , ""
-      , "out vec4 outColor;"
-      , ""
-      , "void main()"
-      , "{"
-      , "  outColor = vec4(fragColor, 1.0);"
-      , "}"
-      ]
-
-    initGLFW = do
-      GLFW.setErrorCallback $ Just $ \err msg ->
-        putStrLn $ "Error " <> show err <> ": " <> msg
-      do res <- GLFW.init
-         when (not res) $ throwString "Could not initialize GLFW"
-      GLFW.windowHint $ GLFW.WindowHint'ContextVersionMajor 3
-      GLFW.windowHint $ GLFW.WindowHint'ContextVersionMinor 2
-      win <- GLFW.createWindow 500 500 "glfw" Nothing Nothing >>= \case
-        Just win -> pure win
-        Nothing  -> do
-          GLFW.terminate
-          throwString "Could not create window"
-      GLFW.makeContextCurrent $ Just win
-      pure win
-
-    initGL vertCount vertPtr = do
-      vao <- GL.genObjectName
-      GL.bindVertexArrayObject $= Just vao
-
-      vertex_buffer <- GL.genObjectName
-      GL.bindBuffer GL.ArrayBuffer $= Just vertex_buffer
-      GL.bufferData GL.ArrayBuffer $= (fromIntegral $ vertCount * sizeOf (undefined :: Vertex), vertPtr, GL.StaticDraw)
-
-      vert <- makeShader GL.VertexShader vertexShaderSource
-      frag <- makeShader GL.FragmentShader fragmentShaderSource
-
-      prog <- GL.createProgram
-      GL.attachShader prog vert
-      GL.attachShader prog frag
-      GL.bindFragDataLocation prog "outColor" $= 0
-      GL.linkProgram prog
-
-      pos <- GL.get $ GL.attribLocation prog "position"
-      GL.vertexAttribArray pos $= GL.Enabled
-      GL.vertexAttribPointer pos $=
-        ( GL.ToFloat
-        , GL.VertexArrayDescriptor 2 GL.Float
-            (fromIntegral $ sizeOf (undefined :: Vertex))
-            nullPtr
-        )
-
-      col <- GL.get $ GL.attribLocation prog "color"
-      GL.vertexAttribArray col $= GL.Enabled
-      GL.vertexAttribPointer col $=
-        ( GL.ToFloat
-        , GL.VertexArrayDescriptor 3 GL.Float
-            (fromIntegral $ sizeOf (undefined :: Vertex))
-            (plusPtr nullPtr $ sizeOf (undefined :: Coords))
-        )
-
-      GL.currentProgram $= Just prog
-
-      pure prog
-      where
-        makeShader typ source = do
-          shader <- GL.createShader typ
-          GL.shaderSourceBS shader $= source
-          GL.compileShader shader
-
-          res <- get $ GL.compileStatus shader
-          compLog <- get $ GL.shaderInfoLog shader
-
-          unless res $ throwString $ "Shader compilation FAILED: \n" <> compLog
-          unless (null compLog) $ throwString $ "Shader compiled with warnings: \n===\n" <> compLog <> "\n===\n"
-
-          pure shader
-
-    loop win prog = do
-      uniMvp <- GL.get $ GL.uniformLocation prog "mvp"
-      mvp <- GL.withNewMatrix GL.ColumnMajor $ \_ -> pure ()
-      go uniMvp mvp
-      where
-        go uniMvp mvp = do
-          shouldClose <- GLFW.windowShouldClose win
-          unless shouldClose $ do
-            checkGLError
-
-            (width, height) <- GLFW.getFramebufferSize win
-            GL.viewport $= (GL.Position 0 0, GL.Size (fromIntegral width) (fromIntegral height))
-
-            GL.clear [GL.ColorBuffer]
-
-            Just t <- GLFW.getTime
-            GL.withMatrix mvp $ \_ ptr ->
-              poke (castPtr ptr) (rotateZ $ pi / 2 * realToFrac t :: Mat44f )
-            GL.uniform uniMvp $= (mvp :: GL.GLmatrix GL.GLfloat)
-
-            GL.drawArrays GL.Triangles 0 3
-
-            GLFW.swapBuffers win
-
-            GLFW.pollEvents
-
-            go uniMvp mvp
-        checkGLError = get GL.errors >>= \case
-          []  -> pure ()
-          ers -> throwString $ "OpenGL reported errors: " <> show ers
-
-    finalize win = do
-      GLFW.destroyWindow win
-      GLFW.terminate
-
+  mainGloss
   -- dm <- newEmptyMVar
   -- race_ (simulate dm) (display dm)
 
