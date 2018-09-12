@@ -7,6 +7,13 @@ extra-deps:
 - ./gloss-1.13.0.1
 - ./gloss-rendering-1.13.0.1
 - GLFW-b-1.4.8.4
+- derive-storable-0.1.2.0
+- git: https://github.com/achirkin/easytensor
+  commit: 75dc180c08ceb2321a6eca526a45739da34f646c
+  subdir: easytensor
+- git: https://github.com/achirkin/easytensor
+  commit: 75dc180c08ceb2321a6eca526a45739da34f646c
+  subdir: dimensions
 
 flags:
   gloss:

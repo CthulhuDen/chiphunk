@@ -95,6 +95,9 @@ executables:
     - lens
     - containers
 
+    - generic-deriving
+    - derive-storable
+    - easytensor
     - safe-exceptions
     - OpenGL
     - GLFW-b

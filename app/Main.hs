@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveGeneric #-}
 module Main where
 
 import Chiphunk.Low
@@ -13,34 +14,38 @@ import qualified Gloss.Data as G
 import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
 
 import           Foreign.Storable
+import           Foreign.Storable.Generic
 import           Foreign.Ptr
-import           Foreign.Marshal.Array
+import           Foreign.Marshal hiding (void)
 import           Control.Exception.Safe
 import qualified Graphics.Rendering.OpenGL.GL as GL
 import qualified Graphics.Rendering.OpenGL.GLU as GL
 import           Graphics.Rendering.OpenGL.GL (($=), get)
 import qualified Graphics.UI.GLFW as GLFW
+import           Generics.Deriving
+import           Numeric.Matrix
 
 data Coords = Coords
   { coordX :: !Float
   , coordY :: !Float
-  }
+  } deriving (Generic)
 
-instance Storable Coords where
-  sizeOf _    = 2 * sizeOf (undefined :: Float)
-  alignment _ = alignment (undefined :: Float)
-  poke p (Coords x y) = poke (castPtr p) x *> pokeElemOff (castPtr p) 1 y
-  peek p = Coords <$> peek (castPtr p) <*> peekElemOff (castPtr p) 1
+instance GStorable Coords
+
+data Color = Color
+  { colRed :: !Float
+  , colGreen :: !Float
+  , colBlue :: !Float
+  } deriving (Generic)
+
+instance GStorable Color
 
 data Vertex = Vertex
   { vertCoords :: !Coords
-  }
+  , vertColor :: !Color
+  } deriving (Generic)
 
-instance Storable Vertex where
-  sizeOf _ = sizeOf (undefined :: Coords)
-  alignment _ = alignment (undefined :: Coords)
-  poke p (Vertex c) = poke (castPtr p) c
-  peek p = Vertex <$> peek (castPtr p)
+instance GStorable Vertex
 
 main :: IO ()
 main = do
@@ -52,32 +57,38 @@ main = do
   finalize win
   where
     vertices =
-      [ Vertex $ Coords (-0.6) (-0.6)
-      , Vertex $ Coords 0 0.6
-      , Vertex $ Coords 0.6 (-0.6)
+      [ Vertex (Coords (-0.6) (-0.4)) (Color 1 0 0)
+      , Vertex (Coords 0      0.6)    (Color 0 1 0)
+      , Vertex (Coords 0.6    (-0.4)) (Color 0 0 1)
       ]
 
     vertexShaderSource = GL.packUtf8 $ unlines
       [ "#version 150 core"
       , ""
       , "in vec2 position;"
+      , "in vec3 color;"
+      , ""
+      , "out vec3 fragColor;"
       , ""
       , "uniform mat4 mvp;"
       , ""
       , "void main()"
       , "{"
       , "  gl_Position = mvp * vec4(position, 0.0, 1.0);"
+      , "  fragColor = color;"
       , "}"
       ]
 
     fragmentShaderSource = GL.packUtf8 $ unlines
       [ "#version 150 core"
       , ""
-      , "out vec4 color;"
+      , "in vec3 fragColor;"
+      , ""
+      , "out vec4 outColor;"
       , ""
       , "void main()"
       , "{"
-      , "  color = vec4(1.0, 1.0, 1.0, 1.0);"
+      , "  outColor = vec4(fragColor, 1.0);"
       , "}"
       ]
 
@@ -110,12 +121,26 @@ main = do
       prog <- GL.createProgram
       GL.attachShader prog vert
       GL.attachShader prog frag
-      GL.bindFragDataLocation prog "color" $= 0
+      GL.bindFragDataLocation prog "outColor" $= 0
       GL.linkProgram prog
 
       pos <- GL.get $ GL.attribLocation prog "position"
       GL.vertexAttribArray pos $= GL.Enabled
-      GL.vertexAttribPointer pos $= (GL.ToFloat, GL.VertexArrayDescriptor 2 GL.Float 0 nullPtr)
+      GL.vertexAttribPointer pos $=
+        ( GL.ToFloat
+        , GL.VertexArrayDescriptor 2 GL.Float
+            (fromIntegral $ sizeOf (undefined :: Vertex))
+            nullPtr
+        )
+
+      col <- GL.get $ GL.attribLocation prog "color"
+      GL.vertexAttribArray col $= GL.Enabled
+      GL.vertexAttribPointer col $=
+        ( GL.ToFloat
+        , GL.VertexArrayDescriptor 3 GL.Float
+            (fromIntegral $ sizeOf (undefined :: Vertex))
+            (plusPtr nullPtr $ sizeOf (undefined :: Coords))
+        )
 
       GL.currentProgram $= Just prog
 
@@ -136,9 +161,10 @@ main = do
 
     loop win prog = do
       uniMvp <- GL.get $ GL.uniformLocation prog "mvp"
-      go uniMvp
+      mvp <- GL.withNewMatrix GL.ColumnMajor $ \_ -> pure ()
+      go uniMvp mvp
       where
-        go uniMvp = do
+        go uniMvp mvp = do
           shouldClose <- GLFW.windowShouldClose win
           unless shouldClose $ do
             checkGLError
@@ -148,10 +174,10 @@ main = do
 
             GL.clear [GL.ColorBuffer]
 
-            m <- get $ GL.matrix $ Just $ GL.Modelview 0 :: IO (GL.GLmatrix GL.GLfloat)
-            GL.loadIdentity
-
-            GL.uniformv uniMvp $= m
+            Just t <- GLFW.getTime
+            GL.withMatrix mvp $ \_ ptr ->
+              poke (castPtr ptr) (rotateZ $ pi / 2 * realToFrac t :: Mat44f )
+            GL.uniform uniMvp $= (mvp :: GL.GLmatrix GL.GLfloat)
 
             GL.drawArrays GL.Triangles 0 3
 
@@ -159,7 +185,7 @@ main = do
 
             GLFW.pollEvents
 
-            go uniMvp
+            go uniMvp mvp
         checkGLError = get GL.errors >>= \case
           []  -> pure ()
           ers -> throwString $ "OpenGL reported errors: " <> show ers
