@@ -90,9 +90,10 @@ executables:
     - -O2
     dependencies:
     - chiphunk
-    - gloss
     - async
     - lens
+    - nanovg
+    - nanovg-simple
     - containers
 
 flags:

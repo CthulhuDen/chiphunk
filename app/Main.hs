@@ -3,38 +3,23 @@
 module Main where
 
 import Chiphunk.Low
-import Text.Printf
 import Data.Functor
+import Text.Printf (printf)
 import Control.Monad
 import Control.Concurrent.MVar
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async
 
-import qualified Gloss.Data as G
-import qualified Graphics.Gloss.Interface.IO.Game as G hiding (SpecialKey, playIO)
-
+import qualified Graphics.NanoVG.Simple as NS
+import qualified NanoVG                 as NVG
 import           Data.IORef
 
 main :: IO ()
 main = do
   dm <- newEmptyMVar
   race_
-    -- (simulate dm)
-    (simulateFake dm)
+    (simulate dm)
     (display dm)
-
-simulateFake :: MVar [VisObj] -> IO ()
-simulateFake dm = do
-  c <- newIORef $ Ball (Vect 10 10) 2 45
-  putMVar dm [mkRefObj c]
-
-  go (1/60) 0 c
-  where
-    go step alpha c = do
-      let alpha' = alpha + pi * step / 2
-      writeIORef c $ Ball (Vect (10 * cos alpha') (10 * sin alpha')) 2 45
-      threadDelay $ round $ 1000000 * step
-      go step alpha' c
 
 simulate :: MVar [VisObj] -> IO ()
 simulate dm = do
@@ -110,13 +95,13 @@ simulate dm = do
     -- It is *highly* recommended to use a fixed size time step.
     let timeStep = 1/60
     runFor 3 timeStep $ \time -> do
-      -- pos <- bodyGetPosition ballBody
-      -- vel <- bodyGetVelocity ballBody
-      -- printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
-             -- time (vX pos) (vY pos) (vX vel) (vY vel)
+      pos <- bodyGetPosition ballBody
+      vel <- bodyGetVelocity ballBody
+      printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
+             time (vX pos) (vY pos) (vX vel) (vY vel)
 
-      -- spaceStep space timeStep
-      threadDelay $ round $ 1000000 * timeStep
+      threadDelay $ round $ timeStep * 1000 * 1000
+      spaceStep space timeStep
 
   shapeFree ballShape
   bodyFree ballBody
@@ -132,29 +117,34 @@ simulate dm = do
 display :: MVar [VisObj] -> IO ()
 display dm = do
   d <- takeMVar dm
-  quit <- newEmptyMVar
-  race_ (takeMVar quit) $
-   G.playIO (G.InWindow "chiphunk" (500, 500) (0, 0))
-           (G.makeColor 0.5 0.5 0.5 1)
-           60 (0 :: Int)
-           (\_ -> do
-               pic <- G.Pictures <$> mapM render d
-               print pic
-               pure pic)
-           (\e _ s -> case e of
-              G.KeyPress (G.SpecialKey G.KeyEsc) G.Down -> putMVar quit () $> s
-              _                                         -> pure s)
-           (\_ _ !s -> pure $ s + 1)
+  NS.run 800 600 "Chiphunk" $
+    NS.Window
+      { NS.winInit = \_ -> pure ()
+      , NS.winRender = \_ ctx -> forM_ d $ render ctx
+      , NS.winAfterRender = \_ _ -> pure ()
+      }
   where
-    render (VisObj ioS) = ioS >>= \case
-      Segment (Vect ax ay) (Vect bx by) -> pure $
-        G.Line [(t ax, t ay), (t bx, t by)]
-      Ball (Vect x y) r a -> pure $ G.Translate (t x) (t y) $ G.Rotate (realToFrac (-a)) $
-        G.Pictures
-        [ G.Circle (t r)
-        , G.Line [(0, 0), (t r / 2, 0)]
-        ]
-    t :: Double -> Float
+    render ctx (VisObj ioS) = do
+      NVG.beginPath ctx
+      NVG.strokeColor ctx (NVG.Color 1 1 1 1)
+      ioS >>= \case
+        Segment (Vect ax ay) (Vect bx by) -> do
+          putStrLn $ show ax <> " x " <> show ay <> " -> " <> show bx <> "x" <> show by
+          NVG.moveTo ctx (400 + t ax) (300 - t ay)
+          NVG.lineTo ctx (400 + t bx) (300 - t by)
+          NVG.stroke ctx
+        Ball (Vect x y) r _ -> do
+          putStrLn $ show x <> " x " <> show y <> " R " <> show r
+          NVG.circle ctx (400 + t x) (300 - t y) (t r)
+          NVG.stroke ctx
+        -- Ball (Vect x y) r a -> pure $
+          -- G.Translate (t x) (t y) $
+          -- G.Rotate (realToFrac (-a)) $
+          -- G.Pictures
+            -- [ G.Circle (t r)
+            -- , G.Line [(0, 0), (t r / 2, 0)]
+            -- ]
+    t :: RealFrac frac => Double -> frac
     t = realToFrac . (*10)
 
 data VisShape =
