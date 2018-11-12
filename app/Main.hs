@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
@@ -10,7 +9,8 @@ import Control.Concurrent.MVar
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async
 
-import qualified Graphics.NanoVG.Simple as NS
+import qualified Graphics.NanoVG.Simple as N
+import qualified Graphics.NanoVG.Picture as N
 import qualified NanoVG                 as NVG
 import           Data.IORef
 
@@ -117,35 +117,25 @@ simulate dm = do
 display :: MVar [VisObj] -> IO ()
 display dm = do
   d <- takeMVar dm
-  NS.run 800 600 "Chiphunk" $
-    NS.Window
-      { NS.winInit = \_ -> pure ()
-      , NS.winRender = \_ ctx -> forM_ d $ render ctx
-      , NS.winAfterRender = \_ _ -> pure ()
-      }
+  N.run 800 600 "Chiphunk" $
+    N.runWindow $
+      N.translateP 400 300 .
+      N.scaleP' (0, 0) 10 .
+      N.scalePy (0, 0) (-1) .
+      N.pictures <$>
+        sequence ((render <$>) . runVisObj <$> d)
   where
-    render ctx (VisObj ioS) = do
-      NVG.beginPath ctx
-      NVG.strokeColor ctx (NVG.Color 1 1 1 1)
-      ioS >>= \case
-        Segment (Vect ax ay) (Vect bx by) -> do
-          putStrLn $ show ax <> " x " <> show ay <> " -> " <> show bx <> "x" <> show by
-          NVG.moveTo ctx (400 + t ax) (300 - t ay)
-          NVG.lineTo ctx (400 + t bx) (300 - t by)
-          NVG.stroke ctx
-        Ball (Vect x y) r _ -> do
-          putStrLn $ show x <> " x " <> show y <> " R " <> show r
-          NVG.circle ctx (400 + t x) (300 - t y) (t r)
-          NVG.stroke ctx
-        -- Ball (Vect x y) r a -> pure $
-          -- G.Translate (t x) (t y) $
-          -- G.Rotate (realToFrac (-a)) $
-          -- G.Pictures
-            -- [ G.Circle (t r)
-            -- , G.Line [(0, 0), (t r / 2, 0)]
-            -- ]
-    t :: RealFrac frac => Double -> frac
-    t = realToFrac . (*10)
+    render = \case
+      Segment (Vect ax ay) (Vect bx by) -> N.stroke (NVG.Color 1 1 1 1) $
+        N.line (realToFrac ax, realToFrac ay) (realToFrac bx, realToFrac by)
+      Ball (Vect x y) r a ->
+        let c = (realToFrac x, realToFrac y)
+        in N.stroke (NVG.Color 1 1 1 1) $
+            N.rotateS c (realToFrac a) $
+            N.shapes
+              [ N.circle c (realToFrac r)
+              , N.line c (realToFrac $ x - r / 2, realToFrac y)
+              ]
 
 data VisShape =
     Segment
@@ -159,7 +149,9 @@ data VisShape =
     }
   deriving Show
 
-newtype VisObj = VisObj (IO VisShape)
+newtype VisObj = VisObj
+  { runVisObj :: IO VisShape
+  }
 
 mkRefObj :: IORef VisShape -> VisObj
 mkRefObj r = VisObj $ readIORef r

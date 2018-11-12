@@ -6,4 +6,4 @@ packages:
 extra-deps:
 - nanovg-0.6.0.0
 - git: https://github.com/CthulhuDen/nanovg-simple
-  commit: d8cd2f31031e11e3105332f697fc93cbe3d39775
+  commit: a28c69a96f587f179c0c32c35fcba42aef1fccea
