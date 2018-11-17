@@ -1,5 +1,3 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
-
 -- | Description: Low-level Haskell bindings to Chipmunk2D physics library
 -- Chiphunk is a __low-level__ Haskell bindings for the <https://chipmunk-physics.net/ Chipmunk2D physics engine>.
 -- It includes most (almost all) of the functions mentioned in the main documentation for Chipmunk2D,
@@ -102,14 +100,14 @@ module Chiphunk.Low
     --
     --   -- Create an empty space.
     --   space <- 'spaceNew'
-    --   'spaceSetGravity' space gravity
+    --   'spaceGravity' space $= gravity
     --
     --   -- Add a static line segment shape for the ground.
     --   -- We'll make it slightly tilted so the ball will roll off.
     --   -- We attach it to a static body to tell Chipmunk it shouldn't be movable.
-    --   static <- 'spaceGetStaticBody' space
+    --   static <- get $ 'spaceStaticBody' space
     --   ground <- 'segmentShapeNew' static (Vect (-20) 5) (Vect 20 (-5)) 0
-    --   'shapeSetFriction' ground 1
+    --   'shapeFriction' ground $= 1
     --   'spaceAddShape' space ground
     --
     --   -- Now let's make a ball that falls onto the line and rolls off.
@@ -127,22 +125,22 @@ module Chiphunk.Low
     --   -- The spaceAdd* functions return the thing that you are adding.
     --   ballBody <- 'bodyNew' mass moment
     --   'spaceAddBody' space ballBody
-    --   'bodySetPosition' ballBody (Vect 0 15)
+    --   'bodyPosition' ballBody $= Vect 0 15
     --
     --   -- Now we create the collision shape for the ball.
     --   -- You can create multiple collision shapes that point to the same body.
     --   -- They will all be attached to the body and move around to follow it.
     --   ballShape <- 'circleShapeNew' ballBody radius (Vect 0 0)
     --   'spaceAddShape' space ballShape
-    --   'shapeSetFriction' ballShape 0.7
+    --   'shapeFriction' ballShape $= 0.7
     --
     --   -- Now that it's all set up, we simulate all the objects in the space by
     --   -- stepping forward through time in small increments called steps.
     --   -- It is *highly* recommended to use a fixed size time step.
     --   let timeStep = 1/60
     --   runFor 2 timeStep $ \time -> do
-    --     pos <- 'bodyGetPosition' ballBody
-    --     vel <- 'bodyGetVelocity' ballBody
+    --     pos <- get $ 'bodyPosition' ballBody
+    --     vel <- get $ 'bodyVelocity' ballBody
     --     printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
     --            time (vX pos) (vY pos) (vX vel) (vY vel)
     --
@@ -332,61 +330,19 @@ module Chiphunk.Low
     -- | Chipmunk provides getter/setter functions for a number of properties on rigid bodies.
     -- Setting most properties automatically wakes the rigid bodies up if they were sleeping.
 
-    -- *** The type of a body
-
-    -- | See the section on 'BodyType's for more information.
-  , bodyGetType
-  , bodySetType
-
-    -- *** Mass of the body
-  , bodyGetMass
-  , bodySetMass
-
-    -- *** Moment of inertia
-
-    -- | MoI or sometimes just moment. The moment is like the rotational mass of a body.
-  , bodyGetMoment
-  , bodySetMoment
-
-    -- *** Position of the body
-  , bodyGetPosition
-  , bodySetPosition
-
-    -- *** Center of gravity
-  , bodyGetCenterOfGravity
-  , bodySetCenterOfGravity
-
-    -- *** Linear velocity of the center of gravity
-  , bodyGetVelocity
-  , bodySetVelocity
-
-    -- *** Force applied to the center of gravity
-  , bodyGetForce
-  , bodySetForce
-
-    -- *** Rotation of the body
-
-    -- | A body rotates around its center of gravity, not its position.
-  , bodyGetAngle
-  , bodySetAngle
-
-    -- *** The angular velocity
-  , bodyGetAngularVelocity
-  , bodySetAngularVelocity
-
-    -- *** The torque
-  , bodyGetTorque
-  , bodySetTorque
-
-    -- *** The rotation vector
-  , bodyGetRotation
-
-    -- *** Space
-  , bodyGetSpace
-
-    -- *** User Data
-  , bodyGetUserData
-  , bodySetUserData
+  , bodyType
+  , bodyMass
+  , bodyMoment
+  , bodyPosition
+  , bodyCenterOfGravity
+  , bodyVelocity
+  , bodyForce
+  , bodyAngle
+  , bodyAngularVelocity
+  , bodyTorque
+  , bodyRotation
+  , bodySpace
+  , bodyUserData
 
     -- ** Moment of Inertia and Area Helper Functions
 
@@ -414,8 +370,7 @@ module Chiphunk.Low
 
     -- | It’s often useful to know the absolute velocity of a point on the surface of a body
     -- since the angular velocity affects everything except the center of gravity.
-  , bodyGetVelocityAtWorldPoint
-  , bodyGetVelocityAtLocalPoint
+  , bodyVelocityAtWorldPoint
 
     -- ** Applying Forces and Torques
 
@@ -457,55 +412,17 @@ module Chiphunk.Low
     -- | Chipmunk provides getter/setter functions for a number of properties on collision shapes.
     -- Setting most properties will automatically wake the attached rigid body, if it’s sleeping.
 
-    -- *** Rigid body shape is attached to
-  , shapeGetBody
-  , shapeSetBody
-
-    -- *** The bounding box
-  , shapeGetBB
-
-    -- *** Sensor
-  , shapeGetSensor
-  , shapeSetSensor
-
-    -- *** Elasticity
-
-    -- | The elasticity for a collision is found by multiplying the elasticity of the individual shapes together.
-    -- A value of 0 gives no bounce, while a value of 1 will give a “perfect” bounce.
-    -- However due to inaccuracies in the simulation using 1 or greater is not recommended.
-  , shapeGetElasticity
-  , shapeSetElasticity
-
-    -- *** Friction coefficient
-
-    -- | Chipmunk uses the Coulomb friction model, a value of 0.0 is frictionless.
-    -- The friction for a collision is found by multiplying the friction of the individual shapes together.
-    -- <http://www.roymech.co.uk/Useful_Tables/Tribology/co_of_frict.htm Tables of friction coefficients.>
-  , shapeGetFriction
-  , shapeSetFriction
-
-    -- *** The surface velocity
-
-    -- | Useful for creating conveyor belts or players that move around.
-    -- This value is only used when calculating friction, not resolving the collision.
-  , shapeGetSurfaceVelocity
-  , shapeSetSurfaceVelocity
-
-    -- *** Collision Type
-  , shapeGetCollisionType
-  , shapeSetCollisionType
-
-    -- *** Collision Filter
+  , shapeBody
+  , shapeBB
+  , shapeSensor
+  , shapeElasticity
+  , shapeFriction
+  , shapeSurfaceVelocity
+  , shapeCollisionType
   , ShapeFilter (..)
-  , shapeGetFilter
-  , shapeSetFilter
-
-    -- *** Space
-  , shapeGetSpace
-
-    -- *** User Data
-  , shapeGetUserData
-  , shapeSetUserData
+  , shapeFilter
+  , shapeSpace
+  , shapeUserData
 
     -- ** Fast Collision Filtering using ShapeFilter
 
@@ -562,7 +479,7 @@ module Chiphunk.Low
 
     -- ** Working With Segment Shapes
   , segmentShapeNew
-  , segmentShapeSetNeighbors
+  , segmentShapeNeighbors
 
     -- ** Working With Polygon Shapes
   , polyShapeNew
@@ -626,63 +543,18 @@ module Chiphunk.Low
 
     -- ** Properties
 
-    -- *** Iterations
-
-    -- | Iterations allow you to control the accuracy of the solver. See above for more information.
-  , spaceGetIterations
-  , spaceSetIterations
-
-    -- *** Global gravity
-  , spaceGetGravity
-  , spaceSetGravity
-
-    -- *** Damping
-
-    -- | A value of 0.9 means that each body will lose 10% of its velocity per second.
-  , spaceGetDamping
-  , spaceSetDamping
-
-    -- *** Idle Speed Threshold
-  , spaceGetIdleSpeedThreshold
-  , spaceSetIdleSpeedThreshold
-
-    -- *** Sleep time threshold
-  , spaceGetSleepTimeThreshold
-  , spaceSetSleepTimeThreshold
-
-    -- *** Allowed overlap
-  , spaceGetCollisionSlop
-  , spaceSetCollisionSlop
-
-    -- *** Collision bias
-
-    -- | Chipmunk allows fast moving objects to overlap, then fixes the overlap over time.
-    -- Overlapping objects are unavoidable even if swept collisions are supported, and this is an efficient
-    -- and stable way to deal with overlapping objects. The bias value controls what percentage of overlap
-    -- remains unfixed after a second and defaults to ~0.2%.
-    --
-    -- __Note__: Very very few games will need to change this value.
-  , spaceGetCollisionBias
-  , spaceSetCollisionBias
-
-    -- *** Collision persistence
-
-    -- | Helps prevent jittering contacts from getting worse.
-  , spaceGetCollisionPersistence
-  , spaceSetCollisionPersistence
-
-    -- *** Current Time Step
-  , spaceGetCurrentTimeStep
-
-    -- *** Locked
+  , spaceIterations
+  , spaceGravity
+  , spaceDamping
+  , spaceIdleSpeedThreshold
+  , spaceSleepTimeThreshold
+  , spaceCollisionSlop
+  , spaceCollisionBias
+  , spaceCollisionPersistence
+  , spaceCurrentTimeStep
   , spaceIsLocked
-
-    -- *** User Data
-  , spaceGetUserData
-  , spaceSetUserData
-
-    -- *** Static Body
-  , spaceGetStaticBody
+  , spaceUserData
+  , spaceStaticBody
 
     -- ** Memory Management Functions
 
@@ -762,41 +634,15 @@ module Chiphunk.Low
 
     -- ** Properties
 
-    -- *** Bodies
-  , constraintGetBodyA
-  , constraintGetBodyB
-
-    -- *** Maximum Force
-  , constraintGetMaxForce
-  , constraintSetMaxForce
-
-    -- *** Error Bias
-
-    -- | This works exactly the same as the collision bias property of a space, but applies to fixing error
-    -- (stretching) of joints instead of overlapping collisions.
-  , constraintGetErrorBias
-  , constraintSetErrorBias
-
-    -- *** Max Bias
-  , constraintGetMaxBias
-  , constraintSetMaxBias
-
-    -- *** Space
-  , constraintGetSpace
-
-    -- *** Bodies Collide?
-
-    -- | Constraints can be used for filtering collisions too. When two bodies collide, Chipmunk ignores the collisions
-    -- if this property is set to 'False' on any constraint that connects the two bodies.
-  , constraintGetCollideBodies
-  , constraintSetCollideBodies
-
-    -- *** User Data
-  , constraintGetUserData
-  , constraintSetUserData
-
-    -- *** Current Impulse
-  , constraintGetImpulse
+  , constraintBodyA
+  , constraintBodyB
+  , constraintMaxForce
+  , constraintErrorBias
+  , constraintMaxBias
+  , constraintSpace
+  , constraintCollideBodies
+  , constraintUserData
+  , constraintImpulse
 
     -- ** Error correction by Feedback
 
@@ -844,25 +690,18 @@ module Chiphunk.Low
   , pinJointNew
 
     -- **** Properties
-  , pinJointGetAnchorA
-  , pinJointSetAnchorA
-  , pinJointGetAnchorB
-  , pinJointSetAnchorB
-  , pinJointGetDist
-  , pinJointSetDist
+  , pinJointAnchorA
+  , pinJointAnchorB
+  , pinJointDist
 
     -- *** Slide Joints
   , slideJointNew
 
     -- **** Properties
-  , slideJointGetAnchorA
-  , slideJointSetAnchorA
-  , slideJointGetAnchorB
-  , slideJointSetAnchorB
-  , slideJointGetMin
-  , slideJointSetMin
-  , slideJointGetMax
-  , slideJointSetMax
+  , slideJointAnchorA
+  , slideJointAnchorB
+  , slideJointMin
+  , slideJointMax
 
     -- *** Pivot Joints
 
@@ -872,36 +711,26 @@ module Chiphunk.Low
   , pivotJointNew2
 
     -- **** Properties
-  , pivotJointGetAnchorA
-  , pivotJointSetAnchorA
-  , pivotJointGetAnchorB
-  , pivotJointSetAnchorB
+  , pivotJointAnchorA
+  , pivotJointAnchorB
 
     -- *** Groove Joint
   , grooveJointNew
 
     -- **** Properties
-  , grooveJointGetGrooveA
-  , grooveJointSetGrooveA
-  , grooveJointGetGrooveB
-  , grooveJointSetGrooveB
-  , grooveJointGetAnchorB
-  , grooveJointSetAnchorB
+  , grooveJointGrooveA
+  , grooveJointGrooveB
+  , grooveJointAnchorB
 
     -- *** Damped Spring
   , dampedSpringNew
 
     -- **** Properties
-  , dampedSpringGetAnchorA
-  , dampedSpringSetAnchorA
-  , dampedSpringGetAnchorB
-  , dampedSpringSetAnchorB
-  , dampedSpringGetRestLength
-  , dampedSpringSetRestLength
-  , dampedSpringGetStiffness
-  , dampedSpringSetStiffness
-  , dampedSpringGetDamping
-  , dampedSpringSetDamping
+  , dampedSpringAnchorA
+  , dampedSpringAnchorB
+  , dampedSpringRestLength
+  , dampedSpringStiffness
+  , dampedSpringDamping
 
     -- *** Damped Rotary Spring
 
@@ -909,12 +738,9 @@ module Chiphunk.Low
   , dampedRotarySpringNew
 
     -- **** Properties
-  , dampedRotarySpringGetRestAngle
-  , dampedRotarySpringSetRestAngle
-  , dampedRotarySpringGetStiffness
-  , dampedRotarySpringSetStiffness
-  , dampedRotarySpringGetDamping
-  , dampedRotarySpringSetDamping
+  , dampedRotarySpringRestAngle
+  , dampedRotarySpringStiffness
+  , dampedRotarySpringDamping
 
     -- *** Rotary Limit Joint
 
@@ -923,10 +749,8 @@ module Chiphunk.Low
   , rotaryLimitJointNew
 
     -- **** Properties
-  , rotaryLimitJointGetMin
-  , rotaryLimitJointSetMin
-  , rotaryLimitJointGetMax
-  , rotaryLimitJointSetMax
+  , rotaryLimitJointMin
+  , rotaryLimitJointMax
 
     -- *** Ratchet Joint
 
@@ -934,12 +758,9 @@ module Chiphunk.Low
   , ratchetJointNew
 
     -- **** Properties
-  , ratchetJointGetAngle
-  , ratchetJointSetAngle
-  , ratchetJointGetPhase
-  , ratchetJointSetPhase
-  , ratchetJointGetRatchet
-  , ratchetJointSetRatchet
+  , ratchetJointAngle
+  , ratchetJointPhase
+  , ratchetJointRatchet
 
     -- *** Gear Joint
 
@@ -947,10 +768,8 @@ module Chiphunk.Low
   , gearJointNew
 
     -- **** Properties
-  , gearJointGetPhase
-  , gearJointSetPhase
-  , gearJointGetRatio
-  , gearJointSetRatio
+  , gearJointPhase
+  , gearJointRatio
 
     -- *** Simple Motor
 
@@ -960,8 +779,7 @@ module Chiphunk.Low
   , simpleMotorNew
 
     -- **** Properties
-  , simpleMotorGetRate
-  , simpleMotorSetRate
+  , simpleMotorRate
 
     -- ** Notes
 
@@ -970,7 +788,7 @@ module Chiphunk.Low
 
     -- * Overview of Collision Detection in Chipmunk
 
-    --  | In order to make collision detection in Chipmunk as fast as possible, the process is broken down
+    -- | In order to make collision detection in Chipmunk as fast as possible, the process is broken down
     -- into several stages. While I’ve tried to keep it conceptually simple, the implementation can be a bit daunting.
     -- Fortunately as a user of the library, you don’t need to understand everything about how it works.
     -- Though if you are trying to squeeze every bit of performance out of Chipmunk, understanding this section
@@ -1115,36 +933,25 @@ module Chiphunk.Low
 
     -- ** Properties
 
-    -- *** Elasticity
-  , arbiterGetRestitution
-  , arbiterSetRestitution
-
-    -- *** Friction
-  , arbiterGetFriction
-  , arbiterSetFriction
-
-    -- *** Surface Velocity
-  , arbiterGetSurfaceVelocity
-  , arbiterSetSurfaceVelocity
-
-    -- *** User Data
-  , arbiterGetUserData
-  , arbiterSetUserData
+  , arbiterRestitution
+  , arbiterFriction
+  , arbiterSurfaceVelocity
+  , arbiterUserData
 
     -- *** Collision Point(s)
-  , arbiterGetCount
-  , arbiterGetNormal
-  , arbiterGetPointA
-  , arbiterGetPointB
-  , arbiterGetDepth
+  , arbiterCount
+  , arbiterNormal
+  , arbiterPointA
+  , arbiterPointB
+  , arbiterDepth
 
     -- *** Other
   , arbiterIsFirstContact
   , arbiterIsRemoval
 
     -- *** Bodies and shapes
-  , arbiterGetShapes
-  , arbiterGetBodies
+  , arbiterShapes
+  , arbiterBodies
 
     -- *** Running wildcard handlers
 
@@ -1171,9 +978,12 @@ module Chiphunk.Low
 
     -- * Re-exports
   , nullPtr
+  , HasGetter (..)
+  , HasSetter (..)
   ) where
 
 import Foreign
+import Data.StateVar
 
 import Chiphunk.Low.Types
 import Chiphunk.Low.Math

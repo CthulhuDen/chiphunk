@@ -2,32 +2,24 @@
 -- Module provides access to the shapes which define collisions of rigid bodies.
 module Chiphunk.Low.Shape
   ( Shape
-  , shapeGetBody
-  , shapeSetBody
-  , shapeGetBB
-  , shapeGetSensor
-  , shapeSetSensor
-  , shapeGetElasticity
-  , shapeSetElasticity
-  , shapeGetFriction
-  , shapeSetFriction
-  , shapeGetSurfaceVelocity
-  , shapeSetSurfaceVelocity
-  , shapeGetCollisionType
-  , shapeSetCollisionType
+  , shapeBody
+  , shapeBB
+  , shapeSensor
+  , shapeElasticity
+  , shapeFriction
+  , shapeSurfaceVelocity
+  , shapeCollisionType
   , ShapeFilter (..)
   , ShapeFilterPtr
-  , shapeGetFilter
-  , shapeSetFilter
-  , shapeGetSpace
-  , shapeGetUserData
-  , shapeSetUserData
+  , shapeFilter
+  , shapeSpace
+  , shapeUserData
   , shapeFree
   , shapeCacheBB
   , shapeUpdate
   , circleShapeNew
   , segmentShapeNew
-  , segmentShapeSetNeighbors
+  , segmentShapeNeighbors
   , polyShapeNew
   , polyShapeNewRaw
   , boxShapeNew
@@ -37,53 +29,84 @@ module Chiphunk.Low.Shape
 import Foreign
 
 import Chiphunk.Low.Internal
+import Data.StateVar
 
 {# import Chiphunk.Low.Types #}
 
 #include <chipmunk/chipmunk.h>
 #include <wrapper.h>
 
--- | Get the rigid body the shape is attached to.
-{# fun unsafe cpShapeGetBody as shapeGetBody {`Shape'} -> `Body' #}
+{# fun unsafe cpShapeGetBody {`Shape'} -> `Body' #}
 
--- | Set the rigid body the shape is attached to. Can only be set when the shape is not added to a space.
-{# fun unsafe cpShapeSetBody as shapeSetBody {`Shape', `Body'} -> `()' #}
+{# fun unsafe cpShapeSetBody {`Shape', `Body'} -> `()' #}
 
--- | The bounding box of the shape. Only guaranteed to be valid after 'shapeCacheBB' or 'spaceStep' is called.
+-- | The rigid body the shape is attached to.
+-- Can only be set when the shape is not added to a space.
+shapeBody :: Shape -> StateVar Body
+shapeBody = mkStateVar cpShapeGetBody cpShapeSetBody
+
+{# fun unsafe w_cpShapeGetBB {`Shape', alloca- `BB' peek*} -> `()' #}
+
+-- | The bounding box of the shape.
+-- Only guaranteed to be valid after 'shapeCacheBB' or 'spaceStep' is called.
 -- Moving a body that a shape is connected to does not update its bounding box.
 -- For shapes used for queries that aren’t attached to bodies, you can also use 'shapeUpdate'.
-{# fun unsafe w_cpShapeGetBB as shapeGetBB {`Shape', alloca- `BB' peek*} -> `()' #}
+shapeBB :: Shape -> GettableStateVar BB
+shapeBB = makeGettableStateVar . w_cpShapeGetBB
 
--- | Get a boolean value if this shape is a sensor or not.
+{# fun unsafe cpShapeGetSensor {`Shape'} -> `Bool' #}
+
+{# fun unsafe cpShapeSetSensor {`Shape', `Bool'} -> `()' #}
+
+-- | A boolean value if this shape is a sensor or not.
 -- Sensors only call collision callbacks, and never generate real collisions.
-{# fun unsafe cpShapeGetSensor as shapeGetSensor {`Shape'} -> `Bool' #}
+shapeSensor :: Shape -> StateVar Bool
+shapeSensor = mkStateVar cpShapeGetSensor cpShapeSetSensor
 
--- | Set a boolean value if this shape is a sensor or not.
-{# fun unsafe cpShapeSetSensor as shapeSetSensor {`Shape', `Bool'} -> `()' #}
+{# fun unsafe cpShapeGetElasticity {`Shape'} -> `Double' #}
 
--- | Get elasticity of the shape.
-{# fun unsafe cpShapeGetElasticity as shapeGetElasticity {`Shape'} -> `Double' #}
+{# fun unsafe cpShapeSetElasticity {`Shape', `Double'} -> `()' #}
 
--- | Set elasticity of the shape.
-{# fun unsafe cpShapeSetElasticity as shapeSetElasticity {`Shape', `Double'} -> `()' #}
+-- | Elasticity of the shape.
+-- A value of 0.0 gives no bounce, while a value of 1.0 will give a “perfect” bounce.
+-- However due to inaccuracies in the simulation using 1.0 or greater is not recommended however.
+--
+-- The elasticity for a collision is found by multiplying the elasticity of the individual shapes together.
+shapeElasticity :: Shape -> StateVar Double
+shapeElasticity = mkStateVar cpShapeGetElasticity cpShapeSetElasticity
 
--- | Get friction coefficient.
-{# fun unsafe cpShapeGetFriction as shapeGetFriction {`Shape'} -> `Double' #}
+{# fun unsafe cpShapeGetFriction {`Shape'} -> `Double' #}
 
--- | Set friction coefficient.
-{# fun unsafe cpShapeSetFriction as shapeSetFriction {`Shape', `Double'} -> `()' #}
+{# fun unsafe cpShapeSetFriction {`Shape', `Double'} -> `()' #}
 
--- | Get the surface velocity of the object.
-{# fun unsafe w_cpShapeGetSurfaceVelocity as shapeGetSurfaceVelocity {`Shape', alloca- `Vect' peek*} -> `()' #}
+-- | Friction coefficient.
+-- Chipmunk uses the Coulomb friction model, a value of 0.0 is frictionless.
+--
+-- The friction for a collision is found by multiplying the friction of the individual shapes together.
+-- <http://www.roymech.co.uk/Useful_Tables/Tribology/co_of_frict.htm Table of friction coefficients.>
+shapeFriction :: Shape -> StateVar Double
+shapeFriction = mkStateVar cpShapeGetFriction cpShapeSetFriction
 
--- | Set the surface velocity of the object.
-{# fun unsafe cpShapeSetSurfaceVelocity as shapeSetSurfaceVelocity {`Shape', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpShapeGetSurfaceVelocity {`Shape', alloca- `Vect' peek*} -> `()' #}
 
--- | Get collision type of this shape.
-{# fun unsafe cpShapeGetCollisionType as shapeGetCollisionType {`Shape'} -> `CollisionType' fromIntegral #}
+{# fun unsafe cpShapeSetSurfaceVelocity {`Shape', with* %`Vect'} -> `()' #}
 
--- | You can assign types to Chipmunk collision shapes that trigger callbacks when objects of certain types touch.
-{# fun unsafe cpShapeSetCollisionType as shapeSetCollisionType {`Shape', fromIntegral `CollisionType'} -> `()' #}
+-- | The surface velocity of the object.
+-- Useful for creating conveyor belts or players that move around.
+-- This value is only used when calculating friction, not resolving the collision.
+shapeSurfaceVelocity :: Shape -> StateVar Vect
+shapeSurfaceVelocity = mkStateVar w_cpShapeGetSurfaceVelocity cpShapeSetSurfaceVelocity
+
+{# fun unsafe cpShapeGetCollisionType {`Shape'} -> `CollisionType' fromIntegral #}
+
+{# fun unsafe cpShapeSetCollisionType {`Shape', fromIntegral `CollisionType'} -> `()' #}
+
+-- | Collision type of this shape.
+-- | You can assign types to Chipmunk collision shapes
+-- that trigger callbacks when objects of certain types touch.
+-- See the callbacks section for more information.
+shapeCollisionType :: Shape -> StateVar CollisionType
+shapeCollisionType = mkStateVar cpShapeGetCollisionType cpShapeSetCollisionType
 
 -- | Fast collision filtering type that is used to determine if two objects collide
 -- before calling collision or query callbacks.
@@ -107,21 +130,29 @@ instance Storable ShapeFilter where
 -- | Pointer to 'ShapeFilter'
 {# pointer *cpShapeFilter as ShapeFilterPtr -> ShapeFilter #}
 
--- | Get the collision filter for this shape.
-{# fun unsafe w_cpShapeGetFilter as shapeGetFilter {`Shape', alloca- `ShapeFilter' peek*} -> `()' #}
+{# fun unsafe w_cpShapeGetFilter {`Shape', alloca- `ShapeFilter' peek*} -> `()' #}
 
--- | Set the collision filter for this shape.
-{# fun unsafe cpShapeSetFilter as shapeSetFilter {`Shape', with* %`ShapeFilter'} -> `()' #}
+{# fun unsafe cpShapeSetFilter {`Shape', with* %`ShapeFilter'} -> `()' #}
 
--- | Get the 'Space' that shape has been added to.
-{# fun unsafe cpShapeGetSpace as shapeGetSpace {`Shape'} -> `Space' #}
+-- | The collision filter for this shape. See Filtering Collisions for more information.
+shapeFilter :: Shape -> StateVar ShapeFilter
+shapeFilter = mkStateVar w_cpShapeGetFilter cpShapeSetFilter
 
--- | Get the user definable data pointer.
-{# fun unsafe cpShapeGetUserData as shapeGetUserData {`Shape'} -> `DataPtr' #}
+{# fun unsafe cpShapeGetSpace {`Shape'} -> `Space' #}
 
--- | Set a user definable data pointer. If you set this to point at the game object the shapes is for,
+-- | The 'Space' that @shape@ has been added to.
+shapeSpace :: Shape -> GettableStateVar Space
+shapeSpace = makeGettableStateVar . cpShapeGetSpace
+
+{# fun unsafe cpShapeGetUserData {`Shape'} -> `DataPtr' #}
+
+{# fun unsafe cpShapeSetUserData {`Shape', `DataPtr'} -> `()' #}
+
+-- | A user definable data pointer.
+-- If you set this to point at the game object the shapes is for,
 -- then you can access your game object from Chipmunk callbacks.
-{# fun unsafe cpShapeSetUserData as shapeSetUserData {`Shape', `DataPtr'} -> `()' #}
+shapeUserData :: Shape -> StateVar DataPtr
+shapeUserData = mkStateVar cpShapeGetUserData cpShapeSetUserData
 
 -- | Deallocates shape.
 {# fun cpShapeFree as shapeFree {`Shape'} -> `()' #}
@@ -155,10 +186,16 @@ instance Storable ShapeFilter where
   , `Double'      -- ^ The thickness of the segment.
   } -> `Shape' #}
 
+{# fun unsafe cpSegmentShapeSetNeighbors {`Shape', with* %`Vect', with* %`Vect'} -> `()' #}
+
 -- | When you have a number of segment shapes that are all joined together,
 -- things can still collide with the “cracks” between the segments.
--- By setting the neighbor segment endpoints you can tell Chipmunk to avoid colliding with the inner parts of the crack.
-{# fun unsafe cpSegmentShapeSetNeighbors as segmentShapeSetNeighbors {`Shape', with* %`Vect', with* %`Vect'} -> `()' #}
+-- By setting the neighbor segment endpoints
+-- you can tell Chipmunk to avoid colliding with the inner parts of the crack.
+segmentShapeNeighbors :: Shape -> SettableStateVar (Vect, Vect)
+segmentShapeNeighbors shape =
+  makeSettableStateVar $ \(v1, v2) ->
+    cpSegmentShapeSetNeighbors shape v1 v2
 
 -- | A convex hull will be calculated from the vertexes automatically.
 -- The polygon shape will be created with a radius, increasing the size of the shape.

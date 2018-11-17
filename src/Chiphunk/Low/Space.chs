@@ -2,27 +2,18 @@
 -- Module defined utilities for manipulating spaces.
 module Chiphunk.Low.Space
   ( Space
-  , spaceGetIterations
-  , spaceSetIterations
-  , spaceGetGravity
-  , spaceSetGravity
-  , spaceGetDamping
-  , spaceSetDamping
-  , spaceGetIdleSpeedThreshold
-  , spaceSetIdleSpeedThreshold
-  , spaceGetSleepTimeThreshold
-  , spaceSetSleepTimeThreshold
-  , spaceGetCollisionSlop
-  , spaceSetCollisionSlop
-  , spaceGetCollisionBias
-  , spaceSetCollisionBias
-  , spaceGetCollisionPersistence
-  , spaceSetCollisionPersistence
-  , spaceGetCurrentTimeStep
+  , spaceIterations
+  , spaceGravity
+  , spaceDamping
+  , spaceIdleSpeedThreshold
+  , spaceSleepTimeThreshold
+  , spaceCollisionSlop
+  , spaceCollisionBias
+  , spaceCollisionPersistence
+  , spaceCurrentTimeStep
   , spaceIsLocked
-  , spaceGetUserData
-  , spaceSetUserData
-  , spaceGetStaticBody
+  , spaceUserData
+  , spaceStaticBody
   , spaceNew
   , spaceFree
   , spaceAddShape
@@ -47,6 +38,7 @@ module Chiphunk.Low.Space
   ) where
 
 import Control.Exception.Safe
+import Data.StateVar
 import Foreign
 
 import Chiphunk.Low.Vect
@@ -55,81 +47,123 @@ import Chiphunk.Low.Vect
 #include <chipmunk/chipmunk.h>
 #include <wrapper.h>
 
--- | Get current iterations. Defaults to 10.
-{# fun unsafe cpSpaceGetIterations as spaceGetIterations {`Space'} -> `Int' #}
+{# fun unsafe cpSpaceGetIterations {`Space'} -> `Int' #}
 
--- | Set current iterations.
-{# fun unsafe cpSpaceSetIterations as spaceSetIterations {`Space', `Int'} -> `()' #}
+{# fun unsafe cpSpaceSetIterations {`Space', `Int'} -> `()' #}
 
--- | Get global gravity applied to the space. Defaults to 'vZero'.
-{# fun unsafe w_cpSpaceGetGravity as spaceGetGravity {`Space', alloca- `Vect' peek*} -> `()' #}
+-- | Iterations allow you to control the accuracy of the solver.
+-- Defaults to 10. See above for more information.
+spaceIterations :: Space -> StateVar Int
+spaceIterations = mkStateVar cpSpaceGetIterations cpSpaceSetIterations
 
--- | Set global gravity applied to the space. Can be overridden on a per body basis
--- by writing custom integration functions. Changing the gravity will activate all sleeping bodies in the space.
-{# fun unsafe cpSpaceSetGravity as spaceSetGravity {`Space', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpSpaceGetGravity {`Space', alloca- `Vect' peek*} -> `()' #}
 
--- | Get amount of simple damping to apply to the space. Defaults to 1.
-{# fun unsafe cpSpaceGetDamping as spaceGetDamping {`Space'} -> `Double' #}
+{# fun unsafe cpSpaceSetGravity {`Space', with* %`Vect'} -> `()' #}
 
--- | Set amount of simple damping to apply to the space. Like gravity, it can be overridden on a per body basis.
-{# fun unsafe cpSpaceSetDamping as spaceSetDamping {`Space', `Double'} -> `()' #}
+-- | Global gravity applied to the space. Defaults to 'vZero'.
+-- Can be overridden on a per body basis by writing custom integration functions.
+-- Changing the gravity will activate all sleeping bodies in the space.
+spaceGravity :: Space -> StateVar Vect
+spaceGravity = mkStateVar w_cpSpaceGetGravity cpSpaceSetGravity
 
--- | Get speed threshold for a body to be considered idle.
+{# fun unsafe cpSpaceGetDamping {`Space'} -> `Double' #}
+
+{# fun unsafe cpSpaceSetDamping {`Space', `Double'} -> `()' #}
+
+-- | Amount of simple damping to apply to the space.
+-- A value of 0.9 means that each body will lose 10% of its velocity per second.
+-- Defaults to 1. Like gravity, it can be overridden on a per body basis.
+spaceDamping :: Space -> StateVar Double
+spaceDamping = mkStateVar cpSpaceGetDamping cpSpaceSetDamping
+
+{# fun unsafe cpSpaceGetIdleSpeedThreshold {`Space'} -> `Double' #}
+
+{# fun unsafe cpSpaceSetIdleSpeedThreshold {`Space', `Double'} -> `()' #}
+
+-- | Speed threshold for a body to be considered idle.
 -- The default value of 0 means the space estimates a good threshold based on gravity.
-{# fun unsafe cpSpaceGetIdleSpeedThreshold as spaceGetIdleSpeedThreshold {`Space'} -> `Double' #}
+spaceIdleSpeedThreshold :: Space -> StateVar Double
+spaceIdleSpeedThreshold = mkStateVar cpSpaceGetIdleSpeedThreshold cpSpaceSetIdleSpeedThreshold
 
--- | Set speed threshold for a body to be considered idle.
-{# fun unsafe cpSpaceSetIdleSpeedThreshold as spaceSetIdleSpeedThreshold {`Space', `Double'} -> `()' #}
+{# fun unsafe cpSpaceGetSleepTimeThreshold {`Space'} -> `Double' #}
 
--- | Get time a group of bodies must remain idle in order to fall asleep.
+{# fun unsafe cpSpaceSetSleepTimeThreshold {`Space', `Double'} -> `()' #}
+
+-- | Time a group of bodies must remain idle in order to fall asleep.
 -- The default value of INFINITY disables the sleeping feature.
-{# fun unsafe cpSpaceGetSleepTimeThreshold as spaceGetSleepTimeThreshold {`Space'} -> `Double' #}
+spaceSleepTimeThreshold :: Space -> StateVar Double
+spaceSleepTimeThreshold = mkStateVar cpSpaceGetSleepTimeThreshold cpSpaceSetSleepTimeThreshold
 
--- | Set time a group of bodies must remain idle in order to fall asleep.
-{# fun unsafe cpSpaceSetSleepTimeThreshold as spaceSetSleepTimeThreshold {`Space', `Double'} -> `()' #}
+{# fun unsafe cpSpaceGetCollisionSlop {`Space'} -> `Double' #}
 
--- | Get amount of overlap between shapes that is allowed. It defaults to 0.1.
-{# fun unsafe cpSpaceGetCollisionSlop as spaceGetCollisionSlop {`Space'} -> `Double' #}
+{# fun unsafe cpSpaceSetCollisionSlop {`Space', `Double'} -> `()' #}
 
--- | Set amount of overlap between shapes that is allowed.
+-- | Amount of overlap between shapes that is allowed.
 -- To improve stability, set this as high as you can without noticable overlapping.
-{# fun unsafe cpSpaceSetCollisionSlop as spaceSetCollisionSlop {`Space', `Double'} -> `()' #}
+-- It defaults to @0.1@.
+spaceCollisionSlop :: Space -> StateVar Double
+spaceCollisionSlop = mkStateVar cpSpaceGetCollisionSlop cpSpaceSetCollisionSlop
 
--- | Get collision bias. The default value is calculated as cpfpow(1.0f - 0.1f, 60.0f)
+{# fun unsafe cpSpaceGetCollisionBias {`Space'} -> `Double' #}
+
+{# fun unsafe cpSpaceSetCollisionBias {`Space', `Double'} -> `()' #}
+
+-- | Chipmunk allows fast moving objects to overlap, then fixes the overlap over time.
+-- Overlapping objects are unavoidable even if swept collisions are supported,
+-- and this is an efficient and stable way to deal with overlapping objects.
+-- The bias value controls what percentage of overlap remains unfixed
+-- after a second and defaults to ~0.2%.
+--
+-- Valid values are in the range from 0 to 1,
+-- but using 0 is not recommended for stability reasons.
+--
+-- The default value is calculated as @(1.0 - 0.1) ^ 60@
 -- meaning that Chipmunk attempts to correct 10% of error ever 1/60th of a second.
-{# fun unsafe cpSpaceGetCollisionBias as spaceGetCollisionBias {`Space'} -> `Double' #}
+--
+-- __Note__: Very very few games will need to change this value.
+spaceCollisionBias :: Space -> StateVar Double
+spaceCollisionBias = mkStateVar cpSpaceGetCollisionBias cpSpaceSetCollisionBias
 
--- | Set collision bias. Valid values are in the range from 0 to 1, but using 0 is not recommended
--- for stability reasons.
-{# fun unsafe cpSpaceSetCollisionBias as spaceSetCollisionBias {`Space', `Double'} -> `()' #}
+{# fun unsafe cpSpaceGetCollisionPersistence {`Space'} -> `Word32' #}
 
--- | Get the number of frames the space keeps collision solutions around for. This defaults to 3
-{# fun unsafe cpSpaceGetCollisionPersistence as spaceGetCollisionPersistence {`Space'} -> `Word32' #}
+{# fun unsafe cpSpaceSetCollisionPersistence {`Space', `Word32'} -> `()' #}
 
--- | Set the number of frames the space keeps collision solutions around for.
--- Very very very few games will need to change this value.
-{# fun unsafe cpSpaceSetCollisionPersistence as spaceSetCollisionPersistence {`Space', `Word32'} -> `()' #}
+-- | The number of frames the space keeps collision solutions around for.
+-- Helps prevent jittering contacts from getting worse.
+-- This defaults to 3 and very very very few games will need to change this value.
+spaceCollisionPersistence :: Space -> StateVar Word32
+spaceCollisionPersistence = mkStateVar cpSpaceGetCollisionPersistence cpSpaceSetCollisionPersistence
 
--- | Retrieves the current (if you are in a callback from 'spaceStep')
+{# fun unsafe cpSpaceGetCurrentTimeStep {`Space'} -> `Double' #}
+
+-- | The current (if you are in a callback from 'spaceStep')
 -- or most recent (outside of a 'spaceStep' call) timestep.
-{# fun unsafe cpSpaceGetCurrentTimeStep as spaceGetCurrentTimeStep {`Space'} -> `Double' #}
+spaceCurrentTimeStep :: Space -> GettableStateVar Double
+spaceCurrentTimeStep = makeGettableStateVar . cpSpaceGetCurrentTimeStep
 
 -- | Returns true when you cannot add/remove objects from the space.
 -- In particular, spaces are locked when in a collision callback.
 -- Instead, run your code in a post-step callback instead.
 {# fun unsafe cpSpaceIsLocked as spaceIsLocked {`Space'} -> `Bool' #}
 
--- | Get the user definable data pointer.
-{# fun unsafe cpSpaceGetUserData as spaceGetUserData {`Space'} -> `DataPtr' #}
+{# fun unsafe cpSpaceGetUserData {`Space'} -> `DataPtr' #}
 
--- | Set a user definable data pointer.
--- It is often useful to point this at the gamestate object or scene management object that owns the space.
-{# fun unsafe cpSpaceSetUserData as spaceSetUserData {`Space', `DataPtr'} -> `()' #}
+{# fun unsafe cpSpaceSetUserData {`Space', `DataPtr'} -> `()' #}
+
+-- | A user definable data pointer.
+-- It is often useful to point this at the gamestate object
+-- or scene management object that owns the space.
+spaceUserData :: Space -> StateVar DataPtr
+spaceUserData = mkStateVar cpSpaceGetUserData cpSpaceSetUserData
+
+{# fun unsafe cpSpaceGetStaticBody {`Space'} -> `Body' #}
 
 -- | A dedicated static body for the space.
--- You don’t have to use it, but because its memory is managed automatically with the space its very convenient.
+-- You don’t have to use it,
+-- but because its memory is managed automatically with the space its very convenient.
 -- You can set its user data pointer to something helpful if you want for callbacks.
-{# fun unsafe cpSpaceGetStaticBody as spaceGetStaticBody {`Space'} -> `Body' #}
+spaceStaticBody :: Space -> GettableStateVar Body
+spaceStaticBody = makeGettableStateVar . cpSpaceGetStaticBody
 
 -- | Standard Chipmunk allocation function.
 {# fun unsafe cpSpaceNew as spaceNew {} -> `Space' #}

@@ -19,9 +19,11 @@ module Chiphunk.Low.Types
   , TransformPtr
   , CollisionType
   , CPBool
+  , mkStateVar
   ) where
 
 import Data.Cross
+import Data.StateVar
 import Data.VectorSpace
 import Foreign
 
@@ -216,3 +218,7 @@ instance Storable Transform where
 type CollisionType = WordPtr
 
 type CPBool = {# type cpBool #}
+
+-- | 'makeStateVar' lifted to reader monad
+mkStateVar :: (a -> IO b) -> (a -> b -> IO ()) -> a -> StateVar b
+mkStateVar g s i = makeStateVar (g i) (s i)

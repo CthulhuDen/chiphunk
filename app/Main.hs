@@ -26,17 +26,17 @@ simulate dm = do
   let gravity = Vect 0 (-100)
   -- Create an empty space.
   space <- spaceNew
-  spaceSetGravity space gravity
+  spaceGravity space $= gravity
 
-  static <- spaceGetStaticBody space
+  static <- get $ spaceStaticBody space
 
   -- Add a static line segment shape for the ground.
   -- We'll make it slightly tilted so the ball will roll off.
   -- We attach it to a static body to tell Chipmunk it shouldn't be movable.
   let (segA, segB) = (Vect (-20) (-5), Vect 20 (-25))
   ground <- segmentShapeNew static segA segB 0
-  shapeSetElasticity ground 0.6
-  shapeSetFriction ground 1
+  shapeElasticity ground $= 0.6
+  shapeFriction ground $= 1
 
   spaceAddShape space ground
 
@@ -63,16 +63,16 @@ simulate dm = do
   -- You can create multiple collision shapes that point to the same body.
   -- They will all be attached to the body and move around to follow it.
   ballShape <- circleShapeNew ballBody radius (Vect 0 0)
-  shapeSetFriction ballShape 0.9
-  shapeSetElasticity ballShape 1
+  shapeFriction ballShape $= 0.9
+  shapeElasticity ballShape $= 1
   spaceAddShape space ballShape
 
   anotherBall <- bodyNew mass100 moment100
   spaceAddBody space anotherBall
 
   anotherBallShape <- circleShapeNew anotherBall radius (Vect 0 0)
-  shapeSetFriction anotherBallShape 0.9
-  shapeSetElasticity anotherBallShape 0.4
+  shapeFriction anotherBallShape $= 0.9
+  shapeElasticity anotherBallShape $= 0.4
   spaceAddShape space anotherBallShape
 
   putMVar dm
@@ -82,21 +82,21 @@ simulate dm = do
     ]
 
   void $ forever $ do
-    bodySetPosition ballBody (Vect (-15) 30)
-    bodySetPosition anotherBall (Vect (-5) 75)
+    bodyPosition ballBody $= Vect (-15) 30
+    bodyPosition anotherBall $= Vect (-5) 75
     -- need to reset ball velocity after previous iteration
-    bodySetVelocity ballBody (Vect 0 0)
-    bodySetAngularVelocity ballBody 0
-    bodySetVelocity anotherBall (Vect 0 0)
-    bodySetAngularVelocity anotherBall 0
+    bodyVelocity ballBody $= Vect 0 0
+    bodyAngularVelocity ballBody $= 0
+    bodyVelocity anotherBall $= Vect 0 0
+    bodyAngularVelocity anotherBall $= 0
 
     -- Now that it's all set up, we simulate all the objects in the space by
     -- stepping forward through time in small increments called steps.
     -- It is *highly* recommended to use a fixed size time step.
     let timeStep = 1/60
     runFor 3 timeStep $ \time -> do
-      pos <- bodyGetPosition ballBody
-      vel <- bodyGetVelocity ballBody
+      pos <- get $ bodyPosition ballBody
+      vel <- get $ bodyVelocity ballBody
       printf "Time is %4.2f. ballBody is at (%6.2f, %6.2f), it's velocity is (%6.2f, %6.2f).\n"
              time (vX pos) (vY pos) (vX vel) (vY vel)
 
@@ -160,4 +160,4 @@ mkStaticObj :: VisShape -> VisObj
 mkStaticObj = VisObj . pure
 
 mkBallBody :: Body -> Double -> VisObj
-mkBallBody b r = VisObj $ Ball <$> bodyGetPosition b <*> pure r <*> bodyGetAngle b
+mkBallBody b r = VisObj $ Ball <$> get (bodyPosition b) <*> pure r <*> get (bodyAngle b)

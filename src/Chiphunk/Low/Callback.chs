@@ -42,8 +42,8 @@ data CollisionHandler = CollisionHandler
   , chPreSolveFunc  :: !(FunPtr (CollisionCallback CPBool))
     -- ^ Two shapes are touching during this step. Return false from the callback to make Chipmunk ignore the collision
     -- this step or true to process it normally. Additionally, you may override collision values using
-    -- 'Chiphunk.Low.Arbiter.arbiterSetFriction', 'Chiphunk.Low.Arbiter.arbiterSetElasticity' or
-    -- 'Chiphunk.Low.arbiterSetSurfaceVelocity' to provide custom friction, elasticity, or surface velocity values.
+    -- 'Chiphunk.Low.Arbiter.arbiterFriction', 'Chiphunk.Low.Arbiter.arbiterRestitution' or
+    -- 'Chiphunk.Low.arbiterSurfaceVelocity' to provide custom friction, elasticity, or surface velocity values.
     -- See 'Arbiter' for more info.
   , chPostSolveFunc :: !(FunPtr (CollisionCallback ()))
     -- ^ Two shapes are touching and their collision response has been processed. You can retrieve the collision

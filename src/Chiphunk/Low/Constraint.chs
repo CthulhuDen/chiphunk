@@ -2,90 +2,59 @@
 -- Module defines utilities for operations with constraints.
 module Chiphunk.Low.Constraint
   ( Constraint
-  , constraintGetBodyA
-  , constraintGetBodyB
-  , constraintGetMaxForce
-  , constraintSetMaxForce
-  , constraintGetErrorBias
-  , constraintSetErrorBias
-  , constraintGetMaxBias
-  , constraintSetMaxBias
-  , constraintGetSpace
-  , constraintGetCollideBodies
-  , constraintSetCollideBodies
-  , constraintGetUserData
-  , constraintSetUserData
-  , constraintGetImpulse
+  , constraintBodyA
+  , constraintBodyB
+  , constraintMaxForce
+  , constraintErrorBias
+  , constraintMaxBias
+  , constraintSpace
+  , constraintCollideBodies
+  , constraintUserData
+  , constraintImpulse
   , constraintFree
   , pinJointNew
-  , pinJointGetAnchorA
-  , pinJointSetAnchorA
-  , pinJointGetAnchorB
-  , pinJointSetAnchorB
-  , pinJointGetDist
-  , pinJointSetDist
+  , pinJointAnchorA
+  , pinJointAnchorB
+  , pinJointDist
   , slideJointNew
-  , slideJointGetAnchorA
-  , slideJointSetAnchorA
-  , slideJointGetAnchorB
-  , slideJointSetAnchorB
-  , slideJointGetMin
-  , slideJointSetMin
-  , slideJointGetMax
-  , slideJointSetMax
+  , slideJointAnchorA
+  , slideJointAnchorB
+  , slideJointMin
+  , slideJointMax
   , pivotJointNew
   , pivotJointNew2
-  , pivotJointGetAnchorA
-  , pivotJointSetAnchorA
-  , pivotJointGetAnchorB
-  , pivotJointSetAnchorB
+  , pivotJointAnchorA
+  , pivotJointAnchorB
   , grooveJointNew
-  , grooveJointGetGrooveA
-  , grooveJointSetGrooveA
-  , grooveJointGetGrooveB
-  , grooveJointSetGrooveB
-  , grooveJointGetAnchorB
-  , grooveJointSetAnchorB
+  , grooveJointGrooveA
+  , grooveJointGrooveB
+  , grooveJointAnchorB
   , dampedSpringNew
-  , dampedSpringGetAnchorA
-  , dampedSpringSetAnchorA
-  , dampedSpringGetAnchorB
-  , dampedSpringSetAnchorB
-  , dampedSpringGetRestLength
-  , dampedSpringSetRestLength
-  , dampedSpringGetStiffness
-  , dampedSpringSetStiffness
-  , dampedSpringGetDamping
-  , dampedSpringSetDamping
+  , dampedSpringAnchorA
+  , dampedSpringAnchorB
+  , dampedSpringRestLength
+  , dampedSpringStiffness
+  , dampedSpringDamping
   , dampedRotarySpringNew
-  , dampedRotarySpringGetRestAngle
-  , dampedRotarySpringSetRestAngle
-  , dampedRotarySpringGetStiffness
-  , dampedRotarySpringSetStiffness
-  , dampedRotarySpringGetDamping
-  , dampedRotarySpringSetDamping
+  , dampedRotarySpringRestAngle
+  , dampedRotarySpringStiffness
+  , dampedRotarySpringDamping
   , rotaryLimitJointNew
-  , rotaryLimitJointGetMin
-  , rotaryLimitJointSetMin
-  , rotaryLimitJointGetMax
-  , rotaryLimitJointSetMax
+  , rotaryLimitJointMin
+  , rotaryLimitJointMax
   , ratchetJointNew
-  , ratchetJointGetAngle
-  , ratchetJointSetAngle
-  , ratchetJointGetPhase
-  , ratchetJointSetPhase
-  , ratchetJointGetRatchet
-  , ratchetJointSetRatchet
+  , ratchetJointAngle
+  , ratchetJointPhase
+  , ratchetJointRatchet
   , gearJointNew
-  , gearJointGetPhase
-  , gearJointSetPhase
-  , gearJointGetRatio
-  , gearJointSetRatio
+  , gearJointPhase
+  , gearJointRatio
+
   , simpleMotorNew
-  , simpleMotorGetRate
-  , simpleMotorSetRate
+  , simpleMotorRate
   ) where
 
+import Data.StateVar
 import Foreign
 
 {# import Chiphunk.Low.Types #}
@@ -93,51 +62,84 @@ import Foreign
 #include <chipmunk/chipmunk.h>
 #include <wrapper.h>
 
--- | Get the first body constraint is attached to
-{# fun unsafe cpConstraintGetBodyA as constraintGetBodyA {`Constraint'} -> `Body' #}
+{# fun unsafe cpConstraintGetBodyA {`Constraint'} -> `Body' #}
 
--- | Get the second body constraint is attached to
-{# fun unsafe cpConstraintGetBodyB as constraintGetBodyB {`Constraint'} -> `Body' #}
+-- | The first body constraint is attached to
+constraintBodyA :: Constraint -> GettableStateVar Body
+constraintBodyA = makeGettableStateVar . cpConstraintGetBodyA
 
--- | Get the maximum force that the constraint can use to act on the two bodies. Defaults to INFINITY.
-{# fun unsafe cpConstraintGetMaxForce as constraintGetMaxForce {`Constraint'} -> `Double' #}
+{# fun unsafe cpConstraintGetBodyB {`Constraint'} -> `Body' #}
 
--- | Set the maximum force that the constraint can use to act on the two bodies.
-{# fun unsafe cpConstraintSetMaxForce as constraintSetMaxForce {`Constraint', `Double'} -> `()' #}
+-- | The second body constraint is attached to
+constraintBodyB :: Constraint -> GettableStateVar Body
+constraintBodyB = makeGettableStateVar . cpConstraintGetBodyB
 
--- | Get the percentage of joint error that remains unfixed after a second.
-{# fun unsafe cpConstraintGetErrorBias as constraintGetErrorBias {`Constraint'} -> `Double' #}
+{# fun unsafe cpConstraintGetMaxForce {`Constraint'} -> `Double' #}
 
--- | Set the percentage of joint error that remains unfixed after a second.
-{# fun unsafe cpConstraintSetErrorBias as constraintSetErrorBias {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpConstraintSetMaxForce {`Constraint', `Double'} -> `()' #}
 
--- | Get the maximum speed at which the constraint can apply error correction. Defaults to INFINITY.
-{# fun unsafe cpConstraintGetMaxBias as constraintGetMaxBias {`Constraint'} -> `Double' #}
+-- | The maximum force that the constraint can use to act on the two bodies.
+-- Defaults to INFINITY.
+constraintMaxForce :: Constraint -> StateVar Double
+constraintMaxForce = mkStateVar cpConstraintGetMaxForce cpConstraintSetMaxForce
 
--- | Set the maximum speed at which the constraint can apply error correction.
-{# fun unsafe cpConstraintSetMaxBias as constraintSetMaxBias {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpConstraintGetErrorBias {`Constraint'} -> `Double' #}
 
--- | Get the 'Space' that constraint has been added to.
-{# fun unsafe cpConstraintGetSpace as constraintGetSpace {`Constraint'} -> `Space' #}
+{# fun unsafe cpConstraintSetErrorBias {`Constraint', `Double'} -> `()' #}
 
--- | Do bodies collide?
-{# fun unsafe cpConstraintGetCollideBodies as constraintGetCollideBodies {`Constraint'} -> `Bool' #}
+-- | The percentage of joint error that remains unfixed after a second.
+-- This works exactly the same as the collision bias property of a space,
+-- but applies to fixing error (stretching) of joints instead of overlapping collisions.
+constraintErrorBias :: Constraint -> StateVar Double
+constraintErrorBias = mkStateVar cpConstraintGetErrorBias cpConstraintSetErrorBias
 
--- | Set if bodies collide. This can be used to create a chain that self collides,
+{# fun unsafe cpConstraintGetMaxBias {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpConstraintSetMaxBias {`Constraint', `Double'} -> `()' #}
+
+-- | Get the maximum speed at which the constraint can apply error correction.
+-- Defaults to INFINITY.
+constraintMaxBias :: Constraint -> StateVar Double
+constraintMaxBias = mkStateVar cpConstraintGetMaxBias cpConstraintSetMaxBias
+
+{# fun unsafe cpConstraintGetSpace {`Constraint'} -> `Space' #}
+
+-- | The 'Space' that constraint has been added to.
+constraintSpace :: Constraint -> GettableStateVar Space
+constraintSpace = makeGettableStateVar . cpConstraintGetSpace
+
+{# fun unsafe cpConstraintGetCollideBodies {`Constraint'} -> `Bool' #}
+
+{# fun unsafe cpConstraintSetCollideBodies {`Constraint', `Bool'} -> `()' #}
+
+-- | Constraints can be used for filtering collisions too.
+-- When two bodies collide, Chipmunk ignores the collisions
+-- if this property is set to @False@ on any constraint that connects the two bodies.
+-- Defaults to @True@.
+--
+-- This can be used to create a chain that self collides,
 -- but adjacent links in the chain do not collide.
-{# fun unsafe cpConstraintSetCollideBodies as constraintSetCollideBodies {`Constraint', `Bool'} -> `()' #}
+constraintCollideBodies :: Constraint -> StateVar Bool
+constraintCollideBodies = mkStateVar cpConstraintGetCollideBodies cpConstraintSetCollideBodies
 
--- | Get the user definable data pointer.
-{# fun unsafe cpConstraintGetUserData as constraintGetUserData {`Constraint'} -> `DataPtr' #}
+{# fun unsafe cpConstraintGetUserData {`Constraint'} -> `DataPtr' #}
 
--- | Set a user definable data pointer. Use this pointer to get a reference to the game object
--- that owns this constraint from callbacks.
-{# fun unsafe cpConstraintSetUserData as constraintSetUserData {`Constraint', `DataPtr'} -> `()' #}
+{# fun unsafe cpConstraintSetUserData {`Constraint', `DataPtr'} -> `()' #}
 
--- | The most recent impulse that constraint applied. To convert this to a force,
--- divide by the timestep passed to 'spaceStep'. You can use this to implement breakable joints
--- to check if the force they attempted to apply exceeded a certain threshold.
-{# fun unsafe cpConstraintGetImpulse as constraintGetImpulse {`Constraint'} -> `Double' #}
+-- | A user definable data pointer.
+-- Use this pointer to get a reference to the game object that owns this constraint
+-- from callbacks.
+constraintUserData :: Constraint -> StateVar DataPtr
+constraintUserData = mkStateVar cpConstraintGetUserData cpConstraintSetUserData
+
+{# fun unsafe cpConstraintGetImpulse {`Constraint'} -> `Double' #}
+
+-- | The most recent impulse that constraint applied.
+-- To convert this to a force, divide by the timestep passed to 'spaceStep'.
+-- You can use this to implement breakable joints to check
+-- if the force they attempted to apply exceeded a certain threshold.
+constraintImpulse :: Constraint -> GettableStateVar Double
+constraintImpulse = makeGettableStateVar . cpConstraintGetImpulse
 
 -- | Free function is shared by all joint types. Allocation functions are specific to each joint type.
 {# fun cpConstraintFree as constraintFree {`Constraint'} -> `()' #}
@@ -152,23 +154,29 @@ import Foreign
   , with* %`Vect' -- ^ Second anchor
   } -> `Constraint' #}
 
--- | Get anchor on first body.
-{# fun unsafe w_cpPinJointGetAnchorA as pinJointGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe w_cpPinJointGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Set anchor on first body.
-{# fun unsafe cpPinJointSetAnchorA as pinJointSetAnchorA {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe cpPinJointSetAnchorA {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Get anchor on second body.
-{# fun unsafe w_cpPinJointGetAnchorB as pinJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+-- | Anchor on first body.
+pinJointAnchorA :: Constraint -> StateVar Vect
+pinJointAnchorA = mkStateVar w_cpPinJointGetAnchorA cpPinJointSetAnchorA
 
--- | Set anchor on second body.
-{# fun unsafe cpPinJointSetAnchorB as pinJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpPinJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Get desired distance the joint will try to enforce.
-{# fun unsafe cpPinJointGetDist as pinJointGetDist {`Constraint'} -> `Double' #}
+{# fun unsafe cpPinJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Set desired distance the joint will try to enforce.
-{# fun unsafe cpPinJointSetDist as pinJointSetDist {`Constraint', `Double'} -> `()' #}
+-- | Anchor on second body.
+pinJointAnchorB :: Constraint -> StateVar Vect
+pinJointAnchorB = mkStateVar w_cpPinJointGetAnchorB cpPinJointSetAnchorB
+
+{# fun unsafe cpPinJointGetDist {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpPinJointSetDist {`Constraint', `Double'} -> `()' #}
+
+-- | Desired distance the joint will try to enforce.
+pinJointDist :: Constraint -> StateVar Double
+pinJointDist = mkStateVar cpPinJointGetDist cpPinJointSetDist
 
 -- | Connect two bodies via anchor points forcing distance to remain in range.
 {# fun unsafe cpSlideJointNew as slideJointNew
@@ -180,29 +188,37 @@ import Foreign
   , `Double'      -- ^ Maximum allowed distance
   } -> `Constraint' #}
 
--- | Get anchor on first body.
-{# fun unsafe w_cpSlideJointGetAnchorA as slideJointGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe w_cpSlideJointGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Set anchor on first body.
-{# fun unsafe cpSlideJointSetAnchorA as slideJointSetAnchorA {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe cpSlideJointSetAnchorA  {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Get anchor on second body.
-{# fun unsafe w_cpSlideJointGetAnchorB as slideJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+-- | Anchor on first body.
+slideJointAnchorA :: Constraint -> StateVar Vect
+slideJointAnchorA = mkStateVar w_cpSlideJointGetAnchorA cpSlideJointSetAnchorA
 
--- | Set anchor on second body.
-{# fun unsafe cpSlideJointSetAnchorB as slideJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpSlideJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Get minimum distance the joint will try to enforce.
-{# fun unsafe cpSlideJointGetMin as slideJointGetMin {`Constraint'} -> `Double' #}
+{# fun unsafe cpSlideJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Set minimum distance the joint will try to enforce.
-{# fun unsafe cpSlideJointSetMin as slideJointSetMin {`Constraint', `Double'} -> `()' #}
+-- | Anchor on second body.
+slideJointAnchorB :: Constraint -> StateVar Vect
+slideJointAnchorB = mkStateVar w_cpSlideJointGetAnchorB cpSlideJointSetAnchorB
 
--- | Get maximum distance the joint will try to enforce.
-{# fun unsafe cpSlideJointGetMax as slideJointGetMax {`Constraint'} -> `Double' #}
+{# fun unsafe cpSlideJointGetMin {`Constraint'} -> `Double' #}
 
--- | Set maximum distance the joint will try to enforce.
-{# fun unsafe cpSlideJointSetMax as slideJointSetMax {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpSlideJointSetMin {`Constraint', `Double'} -> `()' #}
+
+-- | The minimum distance the joint will try to enforce.
+slideJointMin :: Constraint -> StateVar Double
+slideJointMin = mkStateVar cpSlideJointGetMin cpSlideJointSetMin
+
+{# fun unsafe cpSlideJointGetMax {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpSlideJointSetMax {`Constraint', `Double'} -> `()' #}
+
+-- | The maximum distance the joint will try to enforce.
+slideJointMax :: Constraint -> StateVar Double
+slideJointMax = mkStateVar cpSlideJointGetMax cpSlideJointSetMax
 
 -- | Because the pivot location is given in world coordinates,
 -- you must have the bodies moved into the correct positions already.
@@ -222,17 +238,21 @@ import Foreign
   , with* %`Vect' -- ^ Anchor on second body
   } -> `Constraint' #}
 
--- | Get anchor on first body.
-{# fun unsafe w_cpPivotJointGetAnchorA as pivotJointGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe w_cpPivotJointGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Set anchor on first body.
-{# fun unsafe cpPivotJointSetAnchorA as pivotJointSetAnchorA {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe cpPivotJointSetAnchorA {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Get anchor on second body.
-{# fun unsafe w_cpPivotJointGetAnchorB as pivotJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+-- | Anchor on first body.
+pivotJointAnchorA :: Constraint -> StateVar Vect
+pivotJointAnchorA = mkStateVar w_cpPivotJointGetAnchorA cpPivotJointSetAnchorA
 
--- | Set anchor on second body.
-{# fun unsafe cpPivotJointSetAnchorB as pivotJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpPivotJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe cpPivotJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
+
+-- | Anchor on second body.
+pivotJointAnchorB :: Constraint -> StateVar Vect
+pivotJointAnchorB = mkStateVar w_cpPivotJointGetAnchorB cpPivotJointSetAnchorB
 
 -- | Pivot is attached to groove on first body and to anchor on the second. All coordinates are body local.
 {# fun unsafe cpGrooveJointNew as grooveJointNew
@@ -243,23 +263,29 @@ import Foreign
   , with* %`Vect' -- ^ Anchor (on second body)
   } -> `Constraint' #}
 
--- | Get first endpoint of groove.
-{# fun unsafe w_cpGrooveJointGetGrooveA as grooveJointGetGrooveA {`Constraint', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe w_cpGrooveJointGetGrooveA {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Set first endpoint of groove.
-{# fun unsafe cpGrooveJointSetGrooveA as grooveJointSetGrooveA {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe cpGrooveJointSetGrooveA {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Get second endpoint of groove.
-{# fun unsafe w_cpGrooveJointGetGrooveB as grooveJointGetGrooveB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+-- | First endpoint of groove (on first body).
+grooveJointGrooveA :: Constraint -> StateVar Vect
+grooveJointGrooveA = mkStateVar w_cpGrooveJointGetGrooveA cpGrooveJointSetGrooveA
 
--- | Set second endpoint of groove.
-{# fun unsafe cpGrooveJointSetGrooveB as grooveJointSetGrooveB {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpGrooveJointGetGrooveB {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Get anchor on second body.
-{# fun unsafe w_cpGrooveJointGetAnchorB as grooveJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe cpGrooveJointSetGrooveB {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Set anchor on second body.
-{# fun unsafe cpGrooveJointSetAnchorB as grooveJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
+-- | Second endpoint of groove (on first body).
+grooveJointGrooveB :: Constraint -> StateVar Vect
+grooveJointGrooveB = mkStateVar w_cpGrooveJointGetGrooveB cpGrooveJointSetGrooveB
+
+{# fun unsafe w_cpGrooveJointGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe cpGrooveJointSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
+
+-- | Anchor on second body.
+grooveJointAnchorB :: Constraint -> StateVar Vect
+grooveJointAnchorB = mkStateVar w_cpGrooveJointGetAnchorB cpGrooveJointSetAnchorB
 
 -- | Defined much like a slide joint.
 {# fun unsafe cpDampedSpringNew as dampedSpringNew
@@ -268,39 +294,49 @@ import Foreign
   , with* %`Vect' -- ^ First anchor
   , with* %`Vect' -- ^ Second anchor
   , `Double'      -- ^ Distance the spring wants to be
-  , `Double'      -- ^ Spring constant (<http://en.wikipedia.org/wiki/Young's_modulus Young's modulus>)
+  , `Double'      -- ^ Spring constant (<http://en.wikipedia.org/wiki/Young%27s_modulus Young's modulus>)
   , `Double'      -- ^ How soft to make damping of the spring
   } -> `Constraint' #}
 
--- | Get anchor on first body.
-{# fun unsafe w_cpDampedSpringGetAnchorA as dampedSpringGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe w_cpDampedSpringGetAnchorA {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Set anchor on first body.
-{# fun unsafe cpDampedSpringSetAnchorA as dampedSpringSetAnchorA {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe cpDampedSpringSetAnchorA {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Get anchor on second body.
-{# fun unsafe w_cpDampedSpringGetAnchorB as dampedSpringGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
+-- | Anchor on first body.
+dampedSpringAnchorA :: Constraint -> StateVar Vect
+dampedSpringAnchorA = mkStateVar w_cpDampedSpringGetAnchorA cpDampedSpringSetAnchorA
 
--- | Set anchor on second body.
-{# fun unsafe cpDampedSpringSetAnchorB as dampedSpringSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpDampedSpringGetAnchorB {`Constraint', alloca- `Vect' peek*} -> `()' #}
 
--- | Get desired distance the spring will try to enforce.
-{# fun unsafe cpDampedSpringGetRestLength as dampedSpringGetRestLength {`Constraint'} -> `Double' #}
+{# fun unsafe cpDampedSpringSetAnchorB {`Constraint', with* %`Vect'} -> `()' #}
 
--- | Set desired distance the spring will try to enforce.
-{# fun unsafe cpDampedSpringSetRestLength as dampedSpringSetRestLength {`Constraint', `Double'} -> `()' #}
+-- | Anchor on second body.
+dampedSpringAnchorB :: Constraint -> StateVar Vect
+dampedSpringAnchorB = mkStateVar w_cpDampedSpringGetAnchorB cpDampedSpringSetAnchorB
 
--- | Get spring stiffness.
-{# fun unsafe cpDampedSpringGetStiffness as dampedSpringGetStiffness {`Constraint'} -> `Double' #}
+{# fun unsafe cpDampedSpringGetRestLength {`Constraint'} -> `Double' #}
 
--- | Set desired stiffness.
-{# fun unsafe cpDampedSpringSetStiffness as dampedSpringSetStiffness {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpDampedSpringSetRestLength {`Constraint', `Double'} -> `()' #}
 
--- | Get spring damping.
-{# fun unsafe cpDampedSpringGetDamping as dampedSpringGetDamping {`Constraint'} -> `Double' #}
+-- | Desired distance the spring will try to enforce.
+dampedSpringRestLength :: Constraint -> StateVar Double
+dampedSpringRestLength = mkStateVar cpDampedSpringGetRestLength cpDampedSpringSetRestLength
 
--- | Set spring damping.
-{# fun unsafe cpDampedSpringSetDamping as dampedSpringSetDamping {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpDampedSpringGetStiffness {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpDampedSpringSetStiffness {`Constraint', `Double'} -> `()' #}
+
+-- | Spring stiffness
+dampedSpringStiffness :: Constraint -> StateVar Double
+dampedSpringStiffness = mkStateVar cpDampedSpringGetStiffness cpDampedSpringSetStiffness
+
+{# fun unsafe cpDampedSpringGetDamping {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpDampedSpringSetDamping {`Constraint', `Double'} -> `()' #}
+
+-- | Spring damping
+dampedSpringDamping :: Constraint -> StateVar Double
+dampedSpringDamping = mkStateVar cpDampedSpringGetDamping cpDampedSpringSetDamping
 
 -- | Create new damped rotary spring constraint
 {# fun unsafe cpDampedRotarySpringNew as dampedRotarySpringNew
@@ -311,23 +347,29 @@ import Foreign
   , `Double'  -- ^ Spring damping
   } -> `Constraint' #}
 
--- | Get desired angle in radians the spring will try to enforce.
-{# fun unsafe cpDampedRotarySpringGetRestAngle as dampedRotarySpringGetRestAngle {`Constraint'} -> `Double' #}
+{# fun unsafe cpDampedRotarySpringGetRestAngle {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpDampedRotarySpringSetRestAngle {`Constraint', `Double'} -> `()' #}
 
 -- | Set desired angle in radians the spring will try to enforce.
-{# fun unsafe cpDampedRotarySpringSetRestAngle as dampedRotarySpringSetRestAngle {`Constraint', `Double'} -> `()' #}
+dampedRotarySpringRestAngle :: Constraint -> StateVar Double
+dampedRotarySpringRestAngle = mkStateVar cpDampedRotarySpringGetRestAngle cpDampedRotarySpringSetRestAngle
 
--- | Get spring stiffness.
-{# fun unsafe cpDampedRotarySpringGetStiffness as dampedRotarySpringGetStiffness {`Constraint'} -> `Double' #}
+{# fun unsafe cpDampedRotarySpringGetStiffness {`Constraint'} -> `Double' #}
 
--- | Set desired stiffness.
-{# fun unsafe cpDampedRotarySpringSetStiffness as dampedRotarySpringSetStiffness {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpDampedRotarySpringSetStiffness {`Constraint', `Double'} -> `()' #}
 
--- | Get spring damping.
-{# fun unsafe cpDampedRotarySpringGetDamping as dampedRotarySpringGetDamping {`Constraint'} -> `Double' #}
+-- | Spring stiffness.
+dampedRotarySpringStiffness :: Constraint -> StateVar Double
+dampedRotarySpringStiffness = mkStateVar cpDampedRotarySpringGetStiffness cpDampedRotarySpringSetStiffness
 
--- | Set spring damping.
-{# fun unsafe cpDampedRotarySpringSetDamping as dampedRotarySpringSetDamping {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpDampedRotarySpringGetDamping {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpDampedRotarySpringSetDamping {`Constraint', `Double'} -> `()' #}
+
+-- | Spring damping.
+dampedRotarySpringDamping :: Constraint -> StateVar Double
+dampedRotarySpringDamping = mkStateVar cpDampedRotarySpringGetDamping cpDampedRotarySpringSetDamping
 
 -- | Create new rotation limiting joint
 {# fun unsafe cpRotaryLimitJointNew as rotaryLimitJointNew
@@ -337,17 +379,21 @@ import Foreign
   , `Double'  -- ^ Maximum angle in radians the joint will enforce
   } -> `Constraint' #}
 
--- | Get minimum angle in radians the joint will try to enforce.
-{# fun unsafe cpRotaryLimitJointGetMin as rotaryLimitJointGetMin {`Constraint'} -> `Double' #}
+{# fun unsafe cpRotaryLimitJointGetMin {`Constraint'} -> `Double' #}
 
--- | Set minimum angle in radians the joint will try to enforce.
-{# fun unsafe cpRotaryLimitJointSetMin as rotaryLimitJointSetMin {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpRotaryLimitJointSetMin {`Constraint', `Double'} -> `()' #}
 
--- | Get maximum angle in radians the joint will try to enforce.
-{# fun unsafe cpRotaryLimitJointGetMax as rotaryLimitJointGetMax {`Constraint'} -> `Double' #}
+-- | Minimum angle in radians the joint will try to enforce.
+rotaryLimitJointMin :: Constraint -> StateVar Double
+rotaryLimitJointMin = mkStateVar cpRotaryLimitJointGetMin cpRotaryLimitJointSetMin
 
--- | Set maximum angle in radians the joint will try to enforce.
-{# fun unsafe cpRotaryLimitJointSetMax as rotaryLimitJointSetMax {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpRotaryLimitJointGetMax {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpRotaryLimitJointSetMax {`Constraint', `Double'} -> `()' #}
+
+-- | Maximum angle in radians the joint will try to enforce.
+rotaryLimitJointMax :: Constraint -> StateVar Double
+rotaryLimitJointMax = mkStateVar cpRotaryLimitJointGetMax cpRotaryLimitJointSetMax
 
 -- | Allocate and initialize a ratchet joint.
 {# fun unsafe cpRatchetJointNew as ratchetJointNew
@@ -357,23 +403,29 @@ import Foreign
   , `Double'  -- ^ The distance between “clicks”
   } -> `Constraint' #}
 
--- | Get the angle of the current ratchet tooth.
-{# fun unsafe cpRatchetJointGetAngle as ratchetJointGetAngle {`Constraint'} -> `Double' #}
+{# fun unsafe cpRatchetJointGetAngle {`Constraint'} -> `Double' #}
 
--- | Set the angle of the current ratchet tooth.
-{# fun unsafe cpRatchetJointSetAngle as ratchetJointSetAngle {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpRatchetJointSetAngle {`Constraint', `Double'} -> `()' #}
 
--- | Get the phase offset of the ratchet.
-{# fun unsafe cpRatchetJointGetPhase as ratchetJointGetPhase {`Constraint'} -> `Double' #}
+-- | The angle of the current ratchet tooth.
+ratchetJointAngle :: Constraint -> StateVar Double
+ratchetJointAngle = mkStateVar cpRatchetJointGetAngle cpRatchetJointSetAngle
 
--- | Set the phase offset of the ratchet.
-{# fun unsafe cpRatchetJointSetPhase as ratchetJointSetPhase {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpRatchetJointGetPhase {`Constraint'} -> `Double' #}
 
--- | Get the angular distance of each ratchet.
-{# fun unsafe cpRatchetJointGetRatchet as ratchetJointGetRatchet {`Constraint'} -> `Double' #}
+{# fun unsafe cpRatchetJointSetPhase {`Constraint', `Double'} -> `()' #}
 
--- | Set the angular distance of each ratchet.
-{# fun unsafe cpRatchetJointSetRatchet as ratchetJointSetRatchet {`Constraint', `Double'} -> `()' #}
+-- | The phase offset of the ratchet.
+ratchetJointPhase :: Constraint -> StateVar Double
+ratchetJointPhase = mkStateVar cpRatchetJointGetPhase cpRatchetJointSetPhase
+
+{# fun unsafe cpRatchetJointGetRatchet {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpRatchetJointSetRatchet {`Constraint', `Double'} -> `()' #}
+
+-- | The angular distance of each ratchet.
+ratchetJointRatchet :: Constraint -> StateVar Double
+ratchetJointRatchet = mkStateVar cpRatchetJointGetRatchet cpRatchetJointSetRatchet
 
 -- | Allocate and initialize a gear joint.
 {# fun unsafe cpGearJointNew as gearJointNew
@@ -383,17 +435,21 @@ import Foreign
   , `Double'  -- ^ Ratio measures in absolute terms
   } -> `Constraint' #}
 
--- | Get the phase offset of the ratchet.
-{# fun unsafe cpGearJointGetPhase as gearJointGetPhase {`Constraint'} -> `Double' #}
+{# fun unsafe cpGearJointGetPhase {`Constraint'} -> `Double' #}
 
--- | Set the phase offset of the ratchet.
-{# fun unsafe cpGearJointSetPhase as gearJointSetPhase {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpGearJointSetPhase {`Constraint', `Double'} -> `()' #}
 
--- | Get the ratio
-{# fun unsafe cpGearJointGetRatio as gearJointGetRatio {`Constraint'} -> `Double' #}
+-- | Phase offset of the ratchet.
+gearJointPhase :: Constraint -> StateVar Double
+gearJointPhase = mkStateVar cpGearJointGetPhase cpGearJointSetPhase
 
--- | Set the ratio
-{# fun unsafe cpGearJointSetRatio as gearJointSetRatio {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpGearJointGetRatio {`Constraint'} -> `Double' #}
+
+{# fun unsafe cpGearJointSetRatio {`Constraint', `Double'} -> `()' #}
+
+-- | Ratio of the ratchet
+gearJointRatio :: Constraint -> StateVar Double
+gearJointRatio = mkStateVar cpGearJointGetRatio cpGearJointSetRatio
 
 -- | Allocate and initialize a simple motor.
 {# fun unsafe cpSimpleMotorNew as simpleMotorNew
@@ -402,8 +458,10 @@ import Foreign
   , `Double'  -- ^ The desired relative angular velocity.
   } -> `Constraint' #}
 
--- | Get relative angular velocity.
-{# fun unsafe cpSimpleMotorGetRate as simpleMotorGetRate {`Constraint'} -> `Double' #}
+{# fun unsafe cpSimpleMotorGetRate {`Constraint'} -> `Double' #}
 
--- | Set the desired relative angular velocity.
-{# fun unsafe cpSimpleMotorSetRate as simpleMotorSetRate {`Constraint', `Double'} -> `()' #}
+{# fun unsafe cpSimpleMotorSetRate {`Constraint', `Double'} -> `()' #}
+
+-- | Ratio of angular velocities.
+simpleMotorRate :: Constraint -> StateVar Double
+simpleMotorRate = mkStateVar cpSimpleMotorGetRate cpSimpleMotorSetRate

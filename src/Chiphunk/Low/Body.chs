@@ -7,34 +7,23 @@ module Chiphunk.Low.Body
   , bodyNewKinematic
   , bodyNewStatic
   , bodyFree
-  , bodyGetType
-  , bodySetType
-  , bodyGetMass
-  , bodySetMass
-  , bodyGetMoment
-  , bodySetMoment
-  , bodyGetPosition
-  , bodySetPosition
-  , bodyGetCenterOfGravity
-  , bodySetCenterOfGravity
-  , bodyGetVelocity
-  , bodySetVelocity
-  , bodyGetForce
-  , bodySetForce
-  , bodyGetAngle
-  , bodySetAngle
-  , bodyGetAngularVelocity
-  , bodySetAngularVelocity
-  , bodyGetTorque
-  , bodySetTorque
-  , bodyGetRotation
-  , bodyGetSpace
-  , bodyGetUserData
-  , bodySetUserData
+  , bodyType
+  , bodyMass
+  , bodyMoment
+  , bodyPosition
+  , bodyCenterOfGravity
+  , bodyVelocity
+  , bodyForce
+  , bodyAngle
+  , bodyAngularVelocity
+  , bodyTorque
+  , bodyRotation
+  , bodySpace
+  , bodyUserData
   , bodyLocalToWorld
   , bodyWorldToLocal
-  , bodyGetVelocityAtWorldPoint
-  , bodyGetVelocityAtLocalPoint
+  , bodyVelocityAtWorldPoint
+  , bodyVelocityAtLocalPoint
   , bodyApplyForceAtWorldPoint
   , bodyApplyForceAtLocalPoint
   , bodyApplyImpulseAtWorldPoint
@@ -54,6 +43,7 @@ module Chiphunk.Low.Body
 
 import Chiphunk.Low.Vect
 import Control.Exception.Safe
+import Data.StateVar
 import Foreign
 
 {# import Chiphunk.Low.Types #}
@@ -63,9 +53,12 @@ import Foreign
 
 -- | Creates body of type 'BodyTypeDynamic'.
 {# fun unsafe cpBodyNew as bodyNew
-  { `Double' -- ^ Mass of the body. Guessing is usually file.
-  , `Double' -- ^ Moment of inertia of the body. Guessing a moment of inertia can lead to a very poor simulation
-             -- so it’s recommended to use Chipmunk’s moment calculations to estimate the moment for you.
+  { `Double' -- ^ Mass of the body. Guessing is usually fine.
+
+  , `Double' -- ^ Moment of inertia of the body.
+             -- Guessing a moment of inertia can lead to a very poor simulation
+             -- so it’s recommended to use Chipmunk’s moment calculations
+             -- to estimate the moment for you.
   } -> `Body' #}
 
 -- | Create body of type 'BodyTypeKimenatic'.
@@ -74,88 +67,128 @@ import Foreign
 -- | Create body of type 'BodyTypeStatic'.
 {# fun unsafe cpBodyNewStatic as bodyNewStatic {} -> `Body' #}
 
--- | Be careful not to free a body before any shapes or constraints attached to it have been removed from a space.
+-- | Be careful not to free a body before any shapes or constraints attached to it
+-- have been removed from a space.
 {# fun cpBodyFree as bodyFree {`Body'} -> `()' #}
--- no "unsafe" qualifier because I think it may trigger separte callbacks
+-- no "unsafe" qualifier because I think it may trigger callbacks
 
 -- | Get the type of a body (dynamic, kinematic, static).
-{# fun unsafe cpBodyGetType as bodyGetType {`Body'} -> `BodyType' #}
+{# fun unsafe cpBodyGetType {`Body'} -> `BodyType' #}
 
--- | Set the type of a body (dynamic, kinematic, static). When changing an body to a dynamic body,
--- the mass and moment of inertia are recalculated from the shapes added to the body.
+{# fun unsafe cpBodySetType {`Body', `BodyType'} -> `()' #}
+
+-- | Type of a body (dynamic, kinematic, static).
+-- When changing an body to a dynamic body, the mass and moment of inertia
+-- are recalculated from the shapes added to the body.
 -- Custom calculated moments of inertia are not preseved when changing types.
 -- This function cannot be called directly in a collision callback.
-{# fun unsafe cpBodySetType as bodySetType {`Body', `BodyType'} -> `()' #}
+bodyType :: Body -> StateVar BodyType
+bodyType = mkStateVar cpBodyGetType cpBodySetType
 
--- | Get mass of the body.
-{# fun unsafe cpBodyGetMass as bodyGetMass {`Body'} -> `Double' #}
+{# fun unsafe cpBodyGetMass {`Body'} -> `Double' #}
 
--- | Set mass of the body.
-{# fun unsafe cpBodySetMass as bodySetMass {`Body', `Double'} -> `()' #}
+{# fun unsafe cpBodySetMass {`Body', `Double'} -> `()' #}
 
--- | Get moment of inertia of the body.
-{# fun unsafe cpBodyGetMoment as bodyGetMoment {`Body'} -> `Double' #}
+-- | Mass of the body.
+bodyMass :: Body -> StateVar Double
+bodyMass = mkStateVar cpBodyGetMass cpBodySetMass
 
--- | Set moment of inertial of the body. See below for function to help calculate the moment.
-{# fun unsafe cpBodySetMoment as bodySetMoment {`Body', `Double'} -> `()' #}
+{# fun unsafe cpBodyGetMoment {`Body'} -> `Double' #}
 
--- | Get position of the body.
-{# fun unsafe w_cpBodyGetPosition as bodyGetPosition {`Body', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe cpBodySetMoment {`Body', `Double'} -> `()' #}
 
--- | Set position of the body. When changing the position you may also want to call 'spaceReindexShapesForBody'
--- to update the collision detection information for the attached shapes if plan to make any queries against the space.
-{# fun unsafe cpBodySetPosition as bodySetPosition {`Body', with* %`Vect'} -> `()' #}
+-- | Moment of inertia (MoI or sometimes just moment) of the body.
+-- The moment is like the rotational mass of a body.
+-- See below for function to help calculate the moment.
+bodyMoment :: Body -> StateVar Double
+bodyMoment = mkStateVar cpBodyGetMoment cpBodySetMoment
 
--- | Get location of the center of gravity in body local coordinates.
--- The default value is (0, 0), meaning the center of gravity is the same as the position of the body.
-{# fun unsafe w_cpBodyGetCenterOfGravity as bodyGetCenterOfGravity {`Body', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe w_cpBodyGetPosition {`Body', alloca- `Vect' peek*} -> `()' #}
 
--- | Set location of the center of gravity in body local coordinates.
-{# fun unsafe cpBodySetCenterOfGravity as bodySetCenterOfGravity {`Body', with* %`Vect'} -> `()' #}
+{# fun unsafe cpBodySetPosition {`Body', with* %`Vect'} -> `()' #}
 
--- | Get linear velocity of the center of gravity of the body.
-{# fun unsafe w_cpBodyGetVelocity as bodyGetVelocity {`Body', alloca- `Vect' peek*} -> `()' #}
+-- | Position of the body. When changing the position you may also want to call
+-- 'spaceReindexShapesForBody' to update the collision detection information
+-- for the attached shapes if plan to make any queries against the space.
+bodyPosition :: Body -> StateVar Vect
+bodyPosition = mkStateVar w_cpBodyGetPosition cpBodySetPosition
 
--- | Set linear velocity of the center of gravity of the body.
-{# fun unsafe cpBodySetVelocity as bodySetVelocity {`Body', with* %`Vect'} -> `()' #}
+{# fun unsafe w_cpBodyGetCenterOfGravity {`Body', alloca- `Vect' peek*} -> `()' #}
 
--- | Get force applied to the center of gravity of the body.
-{# fun unsafe w_cpBodyGetForce as bodyGetForce {`Body', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe cpBodySetCenterOfGravity {`Body', with* %`Vect'} -> `()' #}
 
--- | Set force applied to the center of gravity of the body. This value is reset for every time step.
-{# fun unsafe cpBodySetForce as bodySetForce {`Body', with* %`Vect'} -> `()' #}
+-- | Location of the center of gravity in body local coordinates.
+-- The default value is (0, 0), meaning the center of gravity
+-- is the same as the position of the body.
+bodyCenterOfGravity :: Body -> StateVar Vect
+bodyCenterOfGravity = mkStateVar w_cpBodyGetCenterOfGravity cpBodySetCenterOfGravity
 
--- | Get rotation of the body in radians.
-{# fun unsafe cpBodyGetAngle as bodyGetAngle {`Body'} -> `Double' #}
+{# fun unsafe w_cpBodyGetVelocity {`Body', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe cpBodySetVelocity {`Body', with* %`Vect'} -> `()' #}
+
+-- | Linear velocity of the center of gravity of the body.
+bodyVelocity :: Body -> StateVar Vect
+bodyVelocity = mkStateVar w_cpBodyGetVelocity cpBodySetVelocity
+
+{# fun unsafe w_cpBodyGetForce {`Body', alloca- `Vect' peek*} -> `()' #}
+
+{# fun unsafe cpBodySetForce {`Body', with* %`Vect'} -> `()' #}
+
+-- | Force applied to the center of gravity of the body.
+-- This value is reset for every time step.
+bodyForce :: Body -> StateVar Vect
+bodyForce = mkStateVar w_cpBodyGetForce cpBodySetForce
+
+{# fun unsafe cpBodyGetAngle {`Body'} -> `Double' #}
+
+{# fun unsafe cpBodySetAngle {`Body', `Double'} -> `()' #}
 
 -- | Set rotation of the body in radians.
 -- When changing the rotation you may also want to call 'spaceReindexShapesForBody'
--- to update the collision detection information for the attached shapes if plan to make any queries against the space.
-{# fun unsafe cpBodySetAngle as bodySetAngle {`Body', `Double'} -> `()' #}
+-- to update the collision detection information for the attached shapes
+-- if you plan to make any queries against the space.
+-- A body rotates around its center of gravity, not its position.
+bodyAngle :: Body -> StateVar Double
+bodyAngle = mkStateVar cpBodyGetAngle cpBodySetAngle
 
--- | Get angular velocity of the body in radians per second.
-{# fun unsafe cpBodyGetAngularVelocity as bodyGetAngularVelocity {`Body'} -> `Double' #}
+{# fun unsafe cpBodyGetAngularVelocity {`Body'} -> `Double' #}
 
--- | Set angular velocity of the body in radians per second.
-{# fun unsafe cpBodySetAngularVelocity as bodySetAngularVelocity {`Body', `Double'} -> `()' #}
+{# fun unsafe cpBodySetAngularVelocity {`Body', `Double'} -> `()' #}
 
--- | Get torque applied to the body.
-{# fun unsafe cpBodyGetTorque as bodyGetTorque {`Body'} -> `Double' #}
+-- | Angular velocity of the body in radians per second.
+bodyAngularVelocity :: Body -> StateVar Double
+bodyAngularVelocity = mkStateVar cpBodyGetAngularVelocity cpBodySetAngularVelocity
 
--- | Set torque applied to the body. This value is reset for every time step.
-{# fun unsafe cpBodySetTorque as bodySetTorque {`Body', `Double'} -> `()' #}
+{# fun unsafe cpBodyGetTorque {`Body'} -> `Double' #}
 
--- | The rotation vector for the body. Can be used with 'vRotate' or 'vUnRotate' to perform fast rotations.
-{# fun unsafe w_cpBodyGetRotation as bodyGetRotation {`Body', alloca- `Vect' peek*} -> `()' #}
+{# fun unsafe cpBodySetTorque {`Body', `Double'} -> `()' #}
 
--- | Get the 'Space' that body has been added to.
-{# fun unsafe cpBodyGetSpace as bodyGetSpace {`Body'} -> `Space' #}
+-- | Torque applied to the body. This value is reset for every time step.
+bodyTorque :: Body -> StateVar Double
+bodyTorque = mkStateVar cpBodyGetTorque cpBodySetTorque
 
--- | Get user data pointer.
-{# fun unsafe cpBodyGetUserData as bodyGetUserData {`Body'} -> `DataPtr' #}
+{# fun unsafe w_cpBodyGetRotation {`Body', alloca- `Vect' peek*} -> `()' #}
 
--- | Get user data pointer. Use this pointer to get a reference to the game object that owns this body from callbacks.
-{# fun unsafe cpBodySetUserData as bodySetUserData {`Body', `DataPtr'} -> `()' #}
+-- | The rotation vector for the body.
+-- Can be used with 'vRotate' or 'vUnRotate' to perform fast rotations.
+bodyRotation :: Body -> GettableStateVar Vect
+bodyRotation = makeGettableStateVar . w_cpBodyGetRotation
+
+{# fun unsafe cpBodyGetSpace {`Body'} -> `Space' #}
+
+-- | The 'Space' that body has been added to.
+bodySpace :: Body -> GettableStateVar Space
+bodySpace = makeGettableStateVar . cpBodyGetSpace
+
+{# fun unsafe cpBodyGetUserData {`Body'} -> `DataPtr' #}
+
+{# fun unsafe cpBodySetUserData {`Body', `DataPtr'} -> `()' #}
+
+-- | User data pointer. Use this pointer to get a reference to the game object
+-- that owns this body from callbacks.
+bodyUserData :: Body -> StateVar DataPtr
+bodyUserData = mkStateVar cpBodyGetUserData cpBodySetUserData
 
 -- | Convert from body local coordinates to world space coordinates.
 {# fun unsafe w_cpBodyLocalToWorld as bodyLocalToWorld {`Body', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
@@ -163,13 +196,19 @@ import Foreign
 -- | Convert from world space coordinates to body local coordinates.
 {# fun unsafe w_cpBodyWorldToLocal as bodyWorldToLocal {`Body', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
 
--- | Get the absolute velocity of the rigid body at the given world point.
-{# fun unsafe w_cpBodyGetVelocityAtWorldPoint as bodyGetVelocityAtWorldPoint
+{# fun unsafe w_cpBodyGetVelocityAtWorldPoint
   {`Body', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
 
--- | Get the absolute velocity of the rigid body at the given body local point.
-{# fun unsafe w_cpBodyGetVelocityAtLocalPoint as bodyGetVelocityAtLocalPoint
+-- | Absolute velocity of the rigid body at the given world point.
+bodyVelocityAtWorldPoint :: Body -> Vect -> GettableStateVar Vect
+bodyVelocityAtWorldPoint body = makeGettableStateVar . w_cpBodyGetVelocityAtWorldPoint body
+
+{# fun unsafe w_cpBodyGetVelocityAtLocalPoint
   {`Body', with* %`Vect', alloca- `Vect' peek*} -> `()' #}
+
+-- | Absolute velocity of the rigid body at the given body local point.
+bodyVelocityAtLocalPoint :: Body -> Vect -> GettableStateVar Vect
+bodyVelocityAtLocalPoint body = makeGettableStateVar . w_cpBodyGetVelocityAtLocalPoint body
 
 -- | Add the @force@ to @body@ as if applied from the world @point@.
 {# fun unsafe cpBodyApplyForceAtWorldPoint as bodyApplyForceAtWorldPoint

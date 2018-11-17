@@ -1,7 +1,7 @@
 name:                chiphunk
 version:             0.1.0.0
 synopsis:            Haskell bindings for Chipmunk2D physics engine
-description:         See "Chiphunk.Low" for documentation
+description:         See module "Chiphunk.Low" for documentation
 homepage:            https://github.com/CthulhuDen/chiphunk#readme
 license:             BSD3
 author:              Cthulhu
@@ -15,6 +15,7 @@ dependencies:
 - base >= 4.7 && < 5
 
 ghc-options:
+- -O2
 - -Wall
 
 library:
@@ -38,6 +39,7 @@ library:
   - Chipmunk2D-7.0.2/include
   - src/Chiphunk
   dependencies:
+  - StateVar
   - vector-space
   - safe-exceptions
   verbatim:
@@ -87,16 +89,15 @@ executables:
     main:            Main.hs
     ghc-options:
     - -threaded
-    - -O2
+    - -rtsopts
+    - -with-rtsopts=-N1
     dependencies:
     - chiphunk
     - async
-    - lens
     - nanovg
     - nanovg-simple
-    - containers
 
 flags:
   library-only:
+    default: true
     manual: false
-    default: false
