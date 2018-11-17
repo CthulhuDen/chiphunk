@@ -1,4 +1,3 @@
 .stack-work/
-/*.cabal
 dist-newstyle/
 .ghc.environment.*

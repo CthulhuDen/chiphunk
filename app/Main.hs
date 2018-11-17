@@ -118,7 +118,7 @@ display :: MVar [VisObj] -> IO ()
 display dm = do
   d <- takeMVar dm
   N.run 800 600 "Chiphunk" $
-    N.runWindow $
+    N.asWindow $
       N.translateP 400 300 .
       N.scaleP' (0, 0) 10 .
       N.scalePy (0, 0) (-1) .
