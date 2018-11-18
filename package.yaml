@@ -1,5 +1,5 @@
 name:                chiphunk
-version:             0.1.0.2
+version:             0.1.0.3
 synopsis:            Haskell bindings for Chipmunk2D physics engine
 description:         Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 homepage:            https://github.com/CthulhuDen/chiphunk#readme
@@ -75,6 +75,8 @@ library:
   - safe-exceptions >= 0.1.7.0 && < 0.2
 
   verbatim:
+    build-tool-depends: |
+      c2hs:c2hs >= 0.28.1 && < 0.29
     c-sources: |
       Chipmunk2D-7.0.2/src/chipmunk.c
       Chipmunk2D-7.0.2/src/cpConstraint.c
