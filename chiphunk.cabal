@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d58a7de4888db68e4e113b78844f012f2a15a43d346c20e6854277dc186f3f4d
+-- hash: c3a385a692c010c72a119863e600c217900dba199d83f7c9018487a5ec11bafc
 
 name:           chiphunk
-version:        0.1.0.1
+version:        0.1.0.2
 synopsis:       Haskell bindings for Chipmunk2D physics engine
 description:    Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 category:       Physics
@@ -51,6 +51,7 @@ extra-source-files:
     Chipmunk2D-7.0.2/include/chipmunk/cpTransform.h
     Chipmunk2D-7.0.2/include/chipmunk/cpVect.h
     src/Chiphunk/wrapper.h
+    Chipmunk2D-7.0.2/src/prime.h
 
 flag library-only
   manual: False

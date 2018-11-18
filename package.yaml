@@ -1,5 +1,5 @@
 name:                chiphunk
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            Haskell bindings for Chipmunk2D physics engine
 description:         Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 homepage:            https://github.com/CthulhuDen/chiphunk#readme
@@ -41,6 +41,7 @@ extra-source-files:
 - Chipmunk2D-7.0.2/include/chipmunk/cpTransform.h
 - Chipmunk2D-7.0.2/include/chipmunk/cpVect.h
 - src/Chiphunk/wrapper.h
+- Chipmunk2D-7.0.2/src/prime.h
 
 dependencies:
 - base >= 4.7 && < 5
