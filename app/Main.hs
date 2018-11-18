@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import Chiphunk.Low
@@ -118,6 +119,8 @@ display :: MVar [VisObj] -> IO ()
 display dm = do
   d <- takeMVar dm
   N.run 800 600 "Chiphunk" $
+    N.showFPS "Liberation Sans" $
+    N.loadFont "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf" "Liberation Sans" $
     N.asWindow $
       N.translateP 400 300 .
       N.scaleP' (0, 0) 10 .
@@ -160,4 +163,6 @@ mkStaticObj :: VisShape -> VisObj
 mkStaticObj = VisObj . pure
 
 mkBallBody :: Body -> Double -> VisObj
-mkBallBody b r = VisObj $ Ball <$> get (bodyPosition b) <*> pure r <*> get (bodyAngle b)
+mkBallBody b r = VisObj $ Ball <$> get (bodyPosition b)
+                               <*> pure r
+                               <*> get (bodyAngle b)

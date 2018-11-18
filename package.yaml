@@ -1,7 +1,7 @@
 name:                chiphunk
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Haskell bindings for Chipmunk2D physics engine
-description:         See module "Chiphunk.Low" for documentation
+description:         Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 homepage:            https://github.com/CthulhuDen/chiphunk#readme
 license:             BSD3
 author:              Cthulhu
@@ -10,12 +10,42 @@ copyright:           Cthulhu (c) 2018
 category:            Physics
 extra-source-files:
 - README.md
+- Chipmunk2D-7.0.2/include/chipmunk/chipmunk_ffi.h
+- Chipmunk2D-7.0.2/include/chipmunk/chipmunk.h
+- Chipmunk2D-7.0.2/include/chipmunk/chipmunk_private.h
+- Chipmunk2D-7.0.2/include/chipmunk/chipmunk_structs.h
+- Chipmunk2D-7.0.2/include/chipmunk/chipmunk_types.h
+- Chipmunk2D-7.0.2/include/chipmunk/chipmunk_unsafe.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpArbiter.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpBB.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpBody.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpConstraint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpDampedRotarySpring.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpDampedSpring.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpGearJoint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpGrooveJoint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpHastySpace.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpMarch.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpPinJoint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpPivotJoint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpPolyline.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpPolyShape.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpRatchetJoint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpRobust.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpRotaryLimitJoint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpShape.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpSimpleMotor.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpSlideJoint.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpSpace.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpSpatialIndex.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpTransform.h
+- Chipmunk2D-7.0.2/include/chipmunk/cpVect.h
+- src/Chiphunk/wrapper.h
 
 dependencies:
 - base >= 4.7 && < 5
 
 ghc-options:
-- -O2
 - -Wall
 
 library:
@@ -39,9 +69,10 @@ library:
   - Chipmunk2D-7.0.2/include
   - src/Chiphunk
   dependencies:
-  - StateVar >= 1.1 && < 1.2
-  - vector-space >= 0.13
-  - safe-exceptions
+  - StateVar >= 1.1.1.1 && < 1.2
+  - vector-space >= 0.13 && < 0.16
+  - safe-exceptions >= 0.1.7.0 && < 0.2
+
   verbatim:
     c-sources: |
       Chipmunk2D-7.0.2/src/chipmunk.c
@@ -88,14 +119,15 @@ executables:
     source-dirs:     app
     main:            Main.hs
     ghc-options:
+    - -O2
     - -threaded
     - -rtsopts
-    - -with-rtsopts=-N1
+    - -with-rtsopts=-N2
     dependencies:
     - chiphunk
-    - async
-    - nanovg >= 0.6
-    - nanovg-simple >= 0.4
+    - async >= 2.2.1 && < 2.3
+    - nanovg >= 0.6.0.0 && < 0.7
+    - nanovg-simple >= 0.4.0.0 && < 0.5
 
 flags:
   library-only:
