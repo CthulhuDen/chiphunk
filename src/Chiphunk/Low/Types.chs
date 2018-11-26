@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 
@@ -23,16 +24,20 @@ module Chiphunk.Low.Types
   ) where
 
 import Data.Cross
+import Data.Hashable
 import Data.StateVar
 import Data.VectorSpace
 import Foreign
+import GHC.Generics (Generic)
 
 #include <chipmunk/chipmunk.h>
 
 -- | 2D vector packed into a struct.
 data Vect = Vect
   { vX :: !Double, vY :: !Double
-  } deriving (Eq, Show)
+  } deriving (Eq, Show, Ord, Generic)
+
+instance Hashable Vect
 
 instance AdditiveGroup Vect where
   zeroV = Vect 0 0
@@ -65,7 +70,9 @@ instance Storable Vect where
 -- | Simple bounding box struct. Stored as left, bottom, right, top values.
 data BB = BB
   { bbL :: !Double, bbB :: !Double, bbR :: !Double, bbT :: !Double
-  } deriving (Show)
+  } deriving (Show, Eq, Ord, Generic)
+
+instance Hashable BB
 
 instance Storable BB where
   sizeOf _    = {# sizeof cpBB #}
@@ -88,6 +95,9 @@ instance Storable BB where
 
 -- | Rigid body somewhere in C code.
 {# pointer *cpBody as Body newtype #}
+  deriving (Eq, Ord, Generic)
+
+instance Hashable Body
 
 instance Storable Body where
   sizeOf (Body p)    = sizeOf p
@@ -134,6 +144,9 @@ deriving instance Show BodyType
 -- | Spaces in Chipmunk are the basic unit of simulation. You add rigid bodies, shapes, and constraints to the space
 -- and then step them all forward through time together.
 {# pointer *cpSpace as Space newtype #}
+  deriving (Eq, Ord, Generic)
+
+instance Hashable Space
 
 instance Storable Space where
   sizeOf (Space p)    = sizeOf p
@@ -154,6 +167,9 @@ instance Storable Space where
 -- Combining multiple shapes gives you the flexibility to make any object you want
 -- as well as providing different areas of the same object with different friction, elasticity or callback values.
 {# pointer *cpShape as Shape newtype #}
+  deriving (Eq, Ord, Generic)
+
+instance Hashable Shape
 
 instance Storable Shape where
   sizeOf (Shape p)    = sizeOf p
@@ -165,6 +181,9 @@ instance Storable Shape where
 -- Constraints can be simple joints that allow bodies to pivot around each other like the bones in your body,
 -- or they can be more abstract like the gear joint or motors.
 {# pointer *cpConstraint as Constraint newtype #}
+  deriving (Eq, Ord, Generic)
+
+instance Hashable Constraint
 
 instance Storable Constraint where
   sizeOf (Constraint p)    = sizeOf p
@@ -182,6 +201,9 @@ instance Storable Constraint where
 -- It was a fun, fitting name and was shorter to type than CollisionPair which I had been using.
 -- It was originally meant to be a private internal structure only, but evolved to be useful from callbacks.
 {# pointer *cpArbiter as Arbiter newtype #}
+  deriving (Eq, Ord, Generic)
+
+instance Hashable Arbiter
 
 instance Storable Arbiter where
   sizeOf (Arbiter p)    = sizeOf p
@@ -192,7 +214,7 @@ instance Storable Arbiter where
 -- | Type used for 2×3 affine transforms in Chipmunk.
 data Transform = Transform
   { tA :: !Double, tB :: !Double, tC :: !Double, tD :: !Double, tTx :: !Double, tTy :: !Double
-  } deriving Show
+  } deriving (Show, Eq)
 
 instance Storable Transform where
   sizeOf _    = {# sizeof cpTransform #}
