@@ -500,6 +500,7 @@ module Chiphunk.Low
 
     -- *** Convex Hull Helper Functions
   , convexHull
+  , convexDecomposition
 
     -- ** Modifying 'Shape's
 

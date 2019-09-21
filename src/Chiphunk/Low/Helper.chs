@@ -10,6 +10,7 @@ module Chiphunk.Low.Helper
   , areaForPoly
   , centroidForPoly
   , convexHull
+  , convexDecomposition
   ) where
 
 import Data.VectorSpace
@@ -97,3 +98,17 @@ convexHull vs tol = unsafePerformIO $
   alloca $ \pFst -> do
     n <- {# call cpConvexHull as c_convexHull #} (fromIntegral $ length vs) pVs pRes pFst (realToFrac tol)
     (,) <$> peekArray (fromIntegral n) pRes <*> (fromIntegral <$> peek pFst)
+
+convexDecomposition :: [Vect] -> Double -> [[Vect]]
+convexDecomposition [] _ = []
+convexDecomposition (v1:concavePolygon) tol = unsafePerformIO $
+  withPolylinePtr (Polyline counterClockwise) $ \lineP -> do
+    setP <- {# call cpPolylineConvexDecomposition #} lineP (realToFrac tol)
+    set <- peekPolylineSet setP
+    {# call cpPolylineSetFree #} setP 1
+    return $ map unPolyline $ unPolylineSet set
+  where
+    counterClockwise
+      | areaForPoly closePolygon 0 < 0 = reverse closePolygon
+      | otherwise                      = closePolygon
+    closePolygon = v1:concavePolygon ++ [v1]

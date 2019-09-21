@@ -1,3 +1,6 @@
+#ifndef __POLYLINE_H__
+#define __POLYLINE_H__
+
 // Copyright 2013 Howling Moon Software. All rights reserved.
 // See http://chipmunk2d.net/legal.php for more information.
 
@@ -6,7 +9,7 @@
 // cpPolyline structs are intended to be passed by value and destroyed when you are done with them.
 typedef struct cpPolyline {
   int count, capacity;
-  cpVect verts[];
+  cpVect verts[0];
 } cpPolyline;
 
 /// Destroy and free a polyline instance.
@@ -68,3 +71,5 @@ CP_EXPORT void cpPolylineSetCollectSegment(cpVect v0, cpVect v1, cpPolylineSet *
 CP_EXPORT cpPolylineSet *cpPolylineConvexDecomposition(cpPolyline *line, cpFloat tol);
 
 #define cpPolylineConvexDecomposition_BETA cpPolylineConvexDecomposition
+
+#endif // __POLYLINE_H__

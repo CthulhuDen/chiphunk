@@ -174,3 +174,7 @@ void w_cpArbiterGetPointB(const cpArbiter *arbiter, int i, cpVect *out)
 {
   *out = cpArbiterGetPointB(arbiter, i);
 }
+
+cpVect* w_cpPolylineVerts(cpPolyline* line) {
+  return line->verts;
+}
