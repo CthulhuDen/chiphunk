@@ -595,17 +595,20 @@ DeepestNotch(int count, cpVect *verts, int hullCount, cpVect *hullVerts, int fir
 
 static inline int IMAX(int a, int b){return (a > b ? a : b);}
 
+#define MAX_RECURSION_DEPTH 100
+
 static void
-ApproximateConcaveDecomposition(cpVect *verts, int count, cpFloat tol, cpPolylineSet *set)
+ApproximateConcaveDecomposition(int depth, cpVect *verts, int count, cpFloat tol, cpPolylineSet *set)
 {
 	int first;
 	cpVect *hullVerts = (cpVect*) alloca(count*sizeof(cpVect));
 	int hullCount = cpConvexHull(count, verts, hullVerts, &first, 0.0);
 
+
 	if(hullCount != count){
 		struct Notch notch = DeepestNotch(count, verts, hullCount, hullVerts, first, tol);
 
-		if(notch.d > tol){
+		if(notch.d > tol && depth < MAX_RECURSION_DEPTH){
 			cpFloat steiner_it = FindSteiner(count, verts, notch);
 
 			if(steiner_it >= 0.0){
@@ -619,11 +622,11 @@ ApproximateConcaveDecomposition(cpVect *verts, int count, cpFloat tol, cpPolylin
 
 				for(int i=0; i<sub1_count; i++) scratch[i] = verts[(notch.i + i)%count];
 				scratch[sub1_count] = steiner;
-				ApproximateConcaveDecomposition(scratch, sub1_count + 1, tol, set);
+				ApproximateConcaveDecomposition(depth+1,scratch, sub1_count + 1, tol, set);
 
 				for(int i=0; i<sub2_count; i++) scratch[i] = verts[(steiner_i + 1 + i)%count];
 				scratch[sub2_count] = steiner;
-				ApproximateConcaveDecomposition(scratch, sub2_count + 1, tol, set);
+				ApproximateConcaveDecomposition(depth+1,scratch, sub2_count + 1, tol, set);
 
 				return;
 			}
@@ -646,7 +649,7 @@ cpPolylineConvexDecomposition_BETA(cpPolyline *line, cpFloat tol)
 	cpAssertSoft(cpAreaForPoly(line->count, line->verts, 0.0) >= 0.0, "Winding is backwards. (Are you passing a hole?)");
 
 	cpPolylineSet *set = cpPolylineSetNew();
-	ApproximateConcaveDecomposition(line->verts, line->count - 1, tol, set);
+	ApproximateConcaveDecomposition(0, line->verts, line->count - 1, tol, set);
 
 	return set;
 }
