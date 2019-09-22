@@ -70,17 +70,20 @@ library:
   - Chipmunk2D-7.0.2/include
   - src/Chiphunk
   dependencies:
-  - StateVar >= 1.1.1.1 && < 1.2
-  - vector-space >= 0.13 && < 0.16
+  - StateVar >= 1.1.1.1 && < 1.3
+  - vector-space >= 0.13 && < 0.17
   - safe-exceptions >= 0.1.7.0 && < 0.2
   - hashable >= 1.2.6.0 && < 1.3
 
   when:
   - condition: os(darwin)
     then:
-      cpp-options: |
-        -D__attribute__(X)= -D_Null_unspecified= -D__asm(X)=
-        -U__has_extension -DCP_USE_CGTYPES=0
+      cpp-options:
+      - -D__attribute__(X)=
+      - -D_Null_unspecified=
+      - -D__asm(X)=
+      - -U__has_extension
+      - -DCP_USE_CGTYPES=0
     else: {}
 
   verbatim:
