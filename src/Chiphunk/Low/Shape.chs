@@ -9,6 +9,8 @@ module Chiphunk.Low.Shape
   , shapeFriction
   , shapeSurfaceVelocity
   , shapeCollisionType
+  , shapeMass
+  , shapeDensity
   , ShapeFilter (..)
   , ShapeFilterPtr
   , shapeFilter
@@ -107,6 +109,20 @@ shapeSurfaceVelocity = mkStateVar w_cpShapeGetSurfaceVelocity cpShapeSetSurfaceV
 -- See the callbacks section for more information.
 shapeCollisionType :: Shape -> StateVar CollisionType
 shapeCollisionType = mkStateVar cpShapeGetCollisionType cpShapeSetCollisionType
+
+{# fun unsafe cpShapeGetMass {`Shape'} -> `Double' #}
+
+{# fun unsafe cpShapeSetMass {`Shape', `Double'} -> `()' #}
+
+shapeMass :: Shape -> StateVar Double
+shapeMass = mkStateVar cpShapeGetMass cpShapeSetMass
+
+{# fun unsafe cpShapeGetDensity {`Shape'} -> `Double' #}
+
+{# fun unsafe cpShapeSetDensity {`Shape', `Double'} -> `()' #}
+
+shapeDensity :: Shape -> StateVar Double
+shapeDensity = mkStateVar cpShapeGetDensity cpShapeSetDensity
 
 -- | Fast collision filtering type that is used to determine if two objects collide
 -- before calling collision or query callbacks.

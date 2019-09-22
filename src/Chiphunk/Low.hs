@@ -419,6 +419,8 @@ module Chiphunk.Low
   , shapeFriction
   , shapeSurfaceVelocity
   , shapeCollisionType
+  , shapeMass
+  , shapeDensity
   , ShapeFilter (..)
   , shapeFilter
   , shapeSpace
