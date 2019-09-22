@@ -83,7 +83,6 @@ library
     , vector-space >=0.13 && <0.17
   if os(darwin)
     cpp-options: -D__attribute__(X)= -D_Null_unspecified= -D__asm(X)= -U__has_extension -DCP_USE_CGTYPES=0
-  else
   default-language: Haskell2010
   build-tool-depends: c2hs:c2hs >= 0.28.1 && < 0.29
   c-sources:

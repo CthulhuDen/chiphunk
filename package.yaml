@@ -77,14 +77,12 @@ library:
 
   when:
   - condition: os(darwin)
-    then:
-      cpp-options:
-      - -D__attribute__(X)=
-      - -D_Null_unspecified=
-      - -D__asm(X)=
-      - -U__has_extension
-      - -DCP_USE_CGTYPES=0
-    else: {}
+    cpp-options:
+    - -D__attribute__(X)=
+    - -D_Null_unspecified=
+    - -D__asm(X)=
+    - -U__has_extension
+    - -DCP_USE_CGTYPES=0
 
   verbatim:
     build-tool-depends: |
