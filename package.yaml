@@ -74,11 +74,13 @@ library:
   - vector-space >= 0.13 && < 0.16
   - safe-exceptions >= 0.1.7.0 && < 0.2
   - hashable >= 1.2.6.0 && < 1.3
+  cpp-options:
+    -DNDEBUG
 
   when:
   - condition: os(darwin)
     then:
-      cpp-options: |
+      cpp-options: >
         -D__attribute__(X)= -D_Null_unspecified= -D__asm(X)=
         -U__has_extension -DCP_USE_CGTYPES=0
     else: {}
