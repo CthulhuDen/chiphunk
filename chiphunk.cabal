@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 00b00eb32101c18611fe676958c86c20b51d91a68149468e368fda9811729f79
+-- hash: d45588680613f538cae69780961bedd10df4e4fb89a5fa6291e1cb771fccdeaf
 
 name:           chiphunk
 version:        0.1.1.0
@@ -72,7 +72,7 @@ library
   hs-source-dirs:
       src
   ghc-options: -Wall
-  cpp-options: -DNDEBUG
+  cc-options: -DNDEBUG
   include-dirs:
       Chipmunk2D-7.0.2/include
       src/Chiphunk
