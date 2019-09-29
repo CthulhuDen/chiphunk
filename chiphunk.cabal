@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e6e34b0f3a7347782c482b79a689d989bed10c837045db9756529b0b9ba1bc80
+-- hash: 4e4533529779c88009c441346b0fbe2c7f9c95158f48e0b25b4cd1e44c83ac3a
 
 name:           chiphunk
 version:        0.1.1.0
@@ -119,5 +119,5 @@ library
       Chipmunk2D-7.0.2/src/cpSpaceQuery.c
       Chipmunk2D-7.0.2/src/cpSpatialIndex.c
       Chipmunk2D-7.0.2/src/cpSweep1D.c
-
+      
       src/Chiphunk/wrapper.c
