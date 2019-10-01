@@ -101,7 +101,7 @@ convexHull vs tol = unsafePerformIO $
 
 convexDecomposition :: [Vect] -> Double -> [[Vect]]
 convexDecomposition [] _ = []
-convexDecomposition (v1:concavePolygon) tol = unsafePerformIO $
+convexDecomposition concavePolygon tol = unsafePerformIO $
   withPolylinePtr (Polyline counterClockwise) $ \lineP -> do
     setP <- {# call cpPolylineConvexDecomposition #} lineP (realToFrac tol)
     set <- peekPolylineSet setP
@@ -109,6 +109,5 @@ convexDecomposition (v1:concavePolygon) tol = unsafePerformIO $
     return $ map unPolyline $ unPolylineSet set
   where
     counterClockwise
-      | areaForPoly closePolygon 0 < 0 = reverse closePolygon
-      | otherwise                      = closePolygon
-    closePolygon = v1:concavePolygon ++ [v1]
+      | areaForPoly concavePolygon 0 < 0 = reverse concavePolygon
+      | otherwise                        = concavePolygon
