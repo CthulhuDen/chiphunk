@@ -21,6 +21,12 @@ module Chiphunk.Low.Types
   , CollisionType
   , CPBool
   , mkStateVar
+  , Polyline(..)
+  , PolylinePtr
+  , PolylineSet(..)
+  , PolylineSetPtr
+  , withPolylinePtr
+  , peekPolylineSet
   ) where
 
 import Data.Cross
@@ -244,3 +250,36 @@ type CPBool = {# type cpBool #}
 -- | 'makeStateVar' lifted to reader monad
 mkStateVar :: (a -> IO b) -> (a -> b -> IO ()) -> a -> StateVar b
 mkStateVar g s i = makeStateVar (g i) (s i)
+
+{# pointer *cpPolyline as PolylinePtr -> Polyline #}
+newtype Polyline = Polyline { unPolyline :: [Vect] }
+
+foreign import ccall w_cpPolylineVerts :: Ptr Polyline -> Ptr Vect
+
+withPolylinePtr :: Polyline -> (Ptr Polyline -> IO a) -> IO a
+withPolylinePtr (Polyline verts) fn = do
+    allocaBytes (sizeOf (undefined :: Vect) * (count+10)) $ \p -> do
+
+      {# set cpPolyline->count #} p $ fromIntegral count
+      {# set cpPolyline->capacity #} p $ fromIntegral count
+      let vp = plusPtr p {# offsetof cpPolyline->verts #}
+      pokeArray vp verts
+      fn p
+  where
+    count = length verts
+
+peekPolyline :: Ptr Polyline -> IO Polyline
+peekPolyline p = do
+  count <- fromIntegral <$> {# get cpPolyline->count #} p
+  let vp = w_cpPolylineVerts p
+  Polyline <$> peekArray count vp
+
+{# pointer *cpPolylineSet as PolylineSetPtr -> PolylineSet #}
+
+data PolylineSet = PolylineSet { unPolylineSet :: [Polyline] }
+
+peekPolylineSet :: Ptr PolylineSet -> IO PolylineSet
+peekPolylineSet p = do
+  count <- fromIntegral <$> {# get cpPolyline->count #} p
+  lp <- {# get cpPolylineSet->lines #} p
+  PolylineSet <$> (mapM peekPolyline =<< peekArray count lp)

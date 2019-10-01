@@ -69,3 +69,5 @@ void w_cpArbiterGetNormal(const cpArbiter *arbiter, cpVect *out);
 void w_cpArbiterGetPointA(const cpArbiter *arbiter, int i, cpVect *out);
 
 void w_cpArbiterGetPointB(const cpArbiter *arbiter, int i, cpVect *out);
+
+cpVect* w_cpPolylineVerts(cpPolyline *line);
