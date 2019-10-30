@@ -7,7 +7,7 @@ cabal-version: 1.12
 -- hash: 2ad0ea8a28a41b5969685566dd3f472c558141b895393055c85b73f670c63421
 
 name:           chiphunk
-version:        0.1.2.0
+version:        0.1.2.1
 synopsis:       Haskell bindings for Chipmunk2D physics engine
 description:    Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 category:       Physics
@@ -79,7 +79,7 @@ library
   build-depends:
       StateVar >=1.1.1.1 && <1.3
     , base >=4.7 && <5
-    , hashable >=1.2.6.0 && <1.3
+    , hashable >=1.2.6.0 && <1.4
     , safe-exceptions >=0.1.7.0 && <0.2
     , vector-space >=0.13 && <0.17
   if os(darwin)
