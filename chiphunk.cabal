@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2ad0ea8a28a41b5969685566dd3f472c558141b895393055c85b73f670c63421
+-- hash: 3b21f15c38f8966ef0527241feb3899a7e824712920c28672784293c6a71c98b
 
 name:           chiphunk
-version:        0.1.2.1
+version:        0.1.2.2
 synopsis:       Haskell bindings for Chipmunk2D physics engine
 description:    Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 category:       Physics

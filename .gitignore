@@ -1,3 +1,5 @@
-.stack-work/
-dist-newstyle/
-.ghc.environment.*
+/.stack-work/
+/dist-newstyle/
+/.ghc.environment.*
+/.idea/
+/*.iml
