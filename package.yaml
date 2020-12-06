@@ -1,5 +1,5 @@
 name:                chiphunk
-version:             0.1.2.2
+version:             0.1.3.0
 synopsis:            Haskell bindings for Chipmunk2D physics engine
 description:         Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 homepage:            https://github.com/CthulhuDen/chiphunk#readme
@@ -124,3 +124,26 @@ library:
       Chipmunk2D-7.0.2/src/cpSweep1D.c
 
       src/Chiphunk/wrapper.c
+
+executables:
+  chiphunk:
+    when:
+      - condition: flag(library-only)
+        buildable: false
+    source-dirs:     app
+    main:            Main.hs
+    ghc-options:
+      - -O2
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N2
+    dependencies:
+      - chiphunk
+      - async >= 2.2.1 && < 2.3
+      - nanovg >= 0.6.0.0 && < 0.7
+      - nanovg-simple >= 0.5.0.0 && < 0.6
+
+flags:
+  library-only:
+    default: true
+    manual: false

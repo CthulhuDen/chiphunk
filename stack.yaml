@@ -3,4 +3,10 @@ resolver: lts-16.14
 packages:
 - .
 
-extra-deps: []
+extra-deps:
+  - nanovg-0.6.0.0
+  - nanovg-simple-0.5.0.0
+
+flags:
+  chiphunk:
+    library-only: false
