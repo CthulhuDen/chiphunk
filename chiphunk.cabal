@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: affa04d0e05ec0c06f300e0e619be66311279ba5faa40e044602907b6e933043
+-- hash: 90052475f280151cd72ce8f9f3e5c8cb24ef4e359341e95c6ad1b6014c46fad7
 
 name:           chiphunk
-version:        0.1.3.0
+version:        0.1.4.0
 synopsis:       Haskell bindings for Chipmunk2D physics engine
 description:    Please see the README on GitHub at <https://github.com/CthulhuDen/chiphunk#readme>
 category:       Physics
@@ -54,7 +54,7 @@ extra-source-files:
     Chipmunk2D-7.0.2/src/prime.h
 
 flag library-only
-  manual: False
+  manual: True
   default: True
 
 library
@@ -134,11 +134,13 @@ executable chiphunk
       app
   ghc-options: -Wall -O2 -threaded -rtsopts -with-rtsopts=-N2
   build-depends:
-      async >=2.2.1 && <2.3
-    , base >=4.7 && <5
-    , chiphunk
-    , nanovg >=0.6.0.0 && <0.7
-    , nanovg-simple >=0.5.0.0 && <0.6
+      base >=4.7 && <5
   if flag(library-only)
     buildable: False
+  else
+    build-depends:
+        async >=2.2.1 && <2.3
+      , chiphunk
+      , nanovg >=0.6.0.0 && <0.7
+      , nanovg-simple >=0.5.0.0 && <0.6
   default-language: Haskell2010
